@@ -143,7 +143,7 @@ SSModelDynGompertzReinit <- setRefClass(
       use.presample.info <<- use.presample.info
       callSuper(Y, q)
     },
-    get_model = function(y, q=NULL, sea.type = NULL, sea.period)
+    get_model = function(y, q=NULL, sea.type = NULL, sea.period) #may have to specify options regarding leading indicator.
     {
       "Retrieves the model object, which is a dynamic Gompertz curve model
       reinitialised at \\code{self$reinit.date}.
