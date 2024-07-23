@@ -54,7 +54,7 @@ df2ldl <- function(dt) {
 #'
 #' @export
 add_daily_ldl <- function(data, LeadIndCol=2){   
-  if (LeadIndCol=2){
+  if (LeadIndCol==2){
     names(data)<-c("Date", "cCases", "cAdmit")
   } else {
     names(data)<-c("Date", "cAdmit", "cCases")
