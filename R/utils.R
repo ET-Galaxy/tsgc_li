@@ -36,6 +36,36 @@ df2ldl <- function(dt) {
   return(dt.ldl)
 }
 
+#' @title Compute successive increments and log growth rate of cumulated dataset
+#
+#' @description Helper method to compute the log growth rates of cumulated
+#' variables. It will compute the log cumulative growth rate for each column in
+#' the data frame.
+#'
+#' @param data Cumulated data series with columns: date, leading indicator and target variable.
+#' @returns A data frame of log growth rates of the cumulated variable which has
+#' been inputted via the parameter \code{dt}.
+#'
+#' @examples
+#' library(tsgc)
+#' data(gauteng,package="tsgc")
+#' df2ldl(gauteng)
+#'
+#'
+#' @export
+add_daily_ldl <- function(data, LeadIndCol=2){   
+  if (LeadIndCol=2){
+    names(data)<-c("Date", "cCases", "cAdmit")
+  } else {
+    names(data)<-c("Date", "cAdmit", "cCases")
+  }
+    data <- data %>%
+      mutate(newCases = c(NA, diff(cCases))) %>%
+      mutate(newAdmit = c(NA, diff(cAdmit)))
+    data$LDLcases = log(as.vector(data$newCases)/lag(as.vector(data$cCases)))
+    data$LDLhosp = log(as.vector(data$newAdmit)/lag(as.vector(data$cAdmit)))
+    return(data)
+  }
 
 #' @title Reinitialise a data frame by subtracting the `reinit.date` row from
 #' all columns
@@ -268,3 +298,4 @@ forecast.peak <- function(delta, gamma) {
       (log(-gamma) - delta) / gamma
     ))
 }
+
