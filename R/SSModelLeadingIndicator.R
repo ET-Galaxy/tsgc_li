@@ -92,7 +92,7 @@ SSModelLeadingIndicator <- setRefClass(
     get_model = function(
       y,
       n.lag,
-      q = NULL,
+      q = NA,
       sea.period = 7
     )
     {
@@ -111,10 +111,82 @@ SSModelLeadingIndicator <- setRefClass(
         if \\code{sea.type = 'none'}.}
       }}
       \\subsection{Return Value}{\\code{KFS} model object.}"
-      model <- .self$get_dynamic_gompertz_model(
-        y, q = q, sea.type = sea.type, sea.period = sea.period
-      )
-      return(model)
-    }
+      
+      # Compute LDL and lag data appropriately
+    
+      data_ldl = data_xts[c("LDLcases","LDLhosp")] %>% na.omit
+    
+      data_ldl$LDLcases = lag(as.vector(data_ldl$LDLcases),n.lag)
+    
+      data_ldl <- na.omit(data_ldl)
+    
+      data_mat = as.matrix(data_ldl)
+      
+      # Standard update function - edited to allow the targeting of the signal-to-noise ratio
+      # Signal-to-noise ratio is defined as the variance of the trend component of order 'order' 
+      # (= 1 for level, = 2 for slope, etc) relative to variance of irregular of series 'index'
+      # (= 1 for 1st col of dataframe, = 2 for 2nd etc)
+      updatesn=function(pars, model, snr, order, index){
+        if(any(is.na(model$Q))){
+          Q <- as.matrix(model$Q[,,1])
+          naQd  <- which(is.na(diag(Q)))
+          naQnd <- which(upper.tri(Q[naQd,naQd]) & is.na(Q[naQd,naQd]))
+          Q[naQd,naQd][lower.tri(Q[naQd,naQd])] <- 0
+          diag(Q)[naQd] <- exp(0.5 * pars[1:length(naQd)])
+          Q[naQd,naQd][naQnd] <- pars[length(naQd)+1:length(naQnd)]
+          model$Q[naQd,naQd,1] <- crossprod(Q[naQd,naQd])
+        }
+        if(!identical(model$H,'Omitted') && any(is.na(model$H))){
+          H<-as.matrix(model$H[,,1])
+          naHd  <- which(is.na(diag(H)))
+          naHnd <- which(upper.tri(H[naHd,naHd]) & is.na(H[naHd,naHd]))
+          H[naHd,naHd][lower.tri(H[naHd,naHd])] <- 0
+          diag(H)[naHd] <-
+            exp(0.5 * pars[length(naQd)+length(naQnd)+1:length(naHd)])
+          H[naHd,naHd][naHnd] <-
+            pars[length(naQd)+length(naQnd)+length(naHd)+1:length(naHnd)]
+          model$H[naHd,naHd,1] <- crossprod(H[naHd,naHd])
+          model$Q[order,order,1] <- snr*crossprod(H[index,index])
+        }
+        model
+      }
+      # Create the SSM model
+      # This has a common trend and slope (common trend of degree 2),
+      # an extra trend [random walk] in LDLhosp only [degree = 1],
+      # and 7 day dummy variable seasonal.
+      
+      if (is.na(sea.period)){
+        mod <- SSModel(data_mat ~ SSMtrend(degree = 2, Q = matrix(c(0,0,0,NA),2,2),type = 'common')+
+                      SSMtrend(degree = 1, Q = matrix(NA),index=1),
+                      H = matrix(c(NA,0,0,NA),2,2))
+      }
+      else {
+        mod <- SSModel(data_mat ~ SSMtrend(degree = 2, Q = matrix(c(0,0,0,NA),2,2),type = 'common')+
+                      SSMseasonal(sea.period,Q = matrix(c(0,0,0,0),2,2), sea.type='dummy', type='distinct')+
+                      SSMtrend(degree = 1, Q = matrix(NA),index=1),
+                      H = matrix(c(NA,0,0,NA),2,2))
+      }
+      
+      # Compute number of parameters - this is just the number of NAs in the model Q and H combined.
+      npar = sum(is.na(mod$Q)) + sum(is.na(mod$H))
+      
+      # Set the options for the update function 
+      # We have a signal/noise ratio of 0.005, the signal is the slope and we are 
+      # targeting the variance of the irregular in cases
+      
+      if (is.na(q)){
+        fit = fitSSM(mod, rep(0,npar))
+      }
+      else{
+        update = updatesn %>% partial(snr=q,order=2,index=1)
+      
+        # Fit the state-space model (ML, diffuse prior)
+        fit = fitSSM(mod, rep(0,npar), updatefn = update)
+      }
+      
+      # Apply the Kalman filter and smoother to the fitted model
+      out = KFS(fit$model)
+      
+      return(out)}
   )
 )
