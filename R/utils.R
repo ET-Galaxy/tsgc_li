@@ -35,7 +35,6 @@ df2ldl <- function(dt) {
   dt.ldl <- log(diff(dt) / stats::lag(dt))
   return(dt.ldl)
 }
-
 #' @title Compute successive increments and log growth rate of cumulated dataset
 #
 #' @description Helper method to compute the log growth rates of cumulated
@@ -43,6 +42,7 @@ df2ldl <- function(dt) {
 #' the data frame.
 #'
 #' @param data Cumulated data series with columns: date, leading indicator and target variable.
+#' @param LeadIndCol Column number that contains the leading indicator
 #' @returns A data frame of log growth rates of the cumulated variable which has
 #' been inputted via the parameter \code{dt}.
 #'
@@ -51,9 +51,10 @@ df2ldl <- function(dt) {
 #' data(gauteng,package="tsgc")
 #' df2ldl(gauteng)
 #'
+#'@import dplyr
 #'
 #' @export
-add_daily_ldl <- function(data, LeadIndCol=2){   
+add_daily_ldl <- function(data, LeadIndCol=2){
   if (LeadIndCol==2){
     names(data)<-c("Date", "cCases", "cAdmit")
   } else {
