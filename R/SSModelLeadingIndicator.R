@@ -84,15 +84,12 @@ SSModelLeadingIndicator <- setRefClass(
       }}
       \\subsection{Usage}{\\code{SSModelDynGompertzReinit$new(y, q = 0.005,
       reinit.date = as.Date(\"2021-05-12\",format = date.format))}}"
-      reinit.date <<- reinit.date
-      original.results <<- original.results
-      use.presample.info <<- use.presample.info
-      callSuper(Y, q)
+      Y <<- Y 
+      q <<- q
+      n.lag <<- n.lag
+      leading_indicator_col <<- leading_indicator_col
     },
     get_model = function(
-      y,
-      n.lag,
-      q = NA,
       sea.period = 7
     )
     {
@@ -114,7 +111,7 @@ SSModelLeadingIndicator <- setRefClass(
       
       # Compute LDL and lag data appropriately
     
-      data_ldl = data_xts[c("LDLcases","LDLhosp")] %>% na.omit
+      data_ldl = Y[c("LDLcases","LDLhosp")] %>% na.omit
     
       data_ldl$LDLcases = lag(as.vector(data_ldl$LDLcases),n.lag)
     
