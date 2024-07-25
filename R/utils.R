@@ -66,7 +66,7 @@ add_daily_ldl <- function(data, LeadIndCol=2){
       mutate(newAdmit = c(NA, diff(cAdmit)))
     data$LDLcases = log(as.vector(data$newCases)/lag(as.vector(data$cCases)))
     data$LDLhosp = log(as.vector(data$newAdmit)/lag(as.vector(data$cAdmit)))
-    return(data)
+    return(na.omit(data))
   }
 
 #' @title Reinitialise a data frame by subtracting the `reinit.date` row from
