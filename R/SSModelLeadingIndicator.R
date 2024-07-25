@@ -42,7 +42,8 @@ setOldClass("KFS")
 #' @importFrom xts periodicity last
 #' @importFrom methods new
 #' @importFrom magrittr %>%
-#' @importFrom KFAS SSMtrend SSMseasonal
+#' @importFrom KFAS SSMtrend SSMseasonal SSModel
+#' @importFrom purrr partial
 #'
 #' @examples
 #' library(tsgc)
@@ -54,18 +55,18 @@ setOldClass("KFS")
 #' # Estimate a specified model
 #' res <- model$estimate()
 #'
-#' @export SSModelDynamicGompertz
-#' @exportClass SSModelDynamicGompertz
+#' @export SSModelLeadingIndicator
+#' @exportClass SSModelLeadingIndicator
 SSModelLeadingIndicator <- setRefClass(
   "SSModelLeadingIndicator",
   fields = list(
-    Y = "xts",
+    Y = "ANY",
     q = "ANY",
-    n.lag = "integer",
-    leading_indicator_col= "integer"
+    n.lag = "numeric",
+    LeadIndCol= "numeric"
   ),
   methods = list(
-    initialize = function(Y, n.lag, LeadIndCol=1, q = NULL)
+    initialize = function(Y, n.lag, LeadIndCol=1, q = NA)
     {
       "Create an instance of the \\code{SSModelLeadingIndicator} class.
        \\subsection{Parameters}{\\itemize{
@@ -84,10 +85,10 @@ SSModelLeadingIndicator <- setRefClass(
       }}
       \\subsection{Usage}{\\code{SSModelDynGompertzReinit$new(y, q = 0.005,
       reinit.date = as.Date(\"2021-05-12\",format = date.format))}}"
-      Y <<- Y 
+      Y <<- Y
       q <<- q
       n.lag <<- n.lag
-      leading_indicator_col <<- leading_indicator_col
+      LeadIndCol <<- LeadIndCol
     },
     get_model = function(
       sea.period = 7
@@ -108,19 +109,19 @@ SSModelLeadingIndicator <- setRefClass(
         if \\code{sea.type = 'none'}.}
       }}
       \\subsection{Return Value}{\\code{KFS} model object.}"
-      
+
       # Compute LDL and lag data appropriately
-    
+
       data_ldl = Y[c("LDLcases","LDLhosp")] %>% na.omit
-    
+
       data_ldl$LDLcases = lag(as.vector(data_ldl$LDLcases),n.lag)
-    
+
       data_ldl <- na.omit(data_ldl)
-    
+
       data_mat = as.matrix(data_ldl)
-      
+
       # Standard update function - edited to allow the targeting of the signal-to-noise ratio
-      # Signal-to-noise ratio is defined as the variance of the trend component of order 'order' 
+      # Signal-to-noise ratio is defined as the variance of the trend component of order 'order'
       # (= 1 for level, = 2 for slope, etc) relative to variance of irregular of series 'index'
       # (= 1 for 1st col of dataframe, = 2 for 2nd etc)
       updatesn=function(pars, model, snr, order, index){
@@ -151,7 +152,7 @@ SSModelLeadingIndicator <- setRefClass(
       # This has a common trend and slope (common trend of degree 2),
       # an extra trend [random walk] in LDLhosp only [degree = 1],
       # and 7 day dummy variable seasonal.
-      
+
       if (is.na(sea.period)){
         mod <- SSModel(data_mat ~ SSMtrend(degree = 2, Q = matrix(c(0,0,0,NA),2,2),type = 'common')+
                       SSMtrend(degree = 1, Q = matrix(NA),index=1),
@@ -163,27 +164,27 @@ SSModelLeadingIndicator <- setRefClass(
                       SSMtrend(degree = 1, Q = matrix(NA),index=1),
                       H = matrix(c(NA,0,0,NA),2,2))
       }
-      
+
       # Compute number of parameters - this is just the number of NAs in the model Q and H combined.
       npar = sum(is.na(mod$Q)) + sum(is.na(mod$H))
-      
-      # Set the options for the update function 
-      # We have a signal/noise ratio of 0.005, the signal is the slope and we are 
+
+      # Set the options for the update function
+      # We have a signal/noise ratio of 0.005, the signal is the slope and we are
       # targeting the variance of the irregular in cases
-      
+
       if (is.na(q)){
         fit = fitSSM(mod, rep(0,npar))
       }
       else{
         update = updatesn %>% partial(snr=q,order=2,index=1)
-      
+
         # Fit the state-space model (ML, diffuse prior)
         fit = fitSSM(mod, rep(0,npar), updatefn = update)
       }
-      
+
       # Apply the Kalman filter and smoother to the fitted model
       out = KFS(fit$model)
-      
+
       return(out)}
   )
 )
