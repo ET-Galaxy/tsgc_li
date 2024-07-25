@@ -51,7 +51,8 @@ df2ldl <- function(dt) {
 #' data(gauteng,package="tsgc")
 #' df2ldl(gauteng)
 #'
-#'@import dplyr
+#'@importFrom magrittr %>%
+#'@importFrom dplyr mutate
 #'
 #' @export
 add_daily_ldl <- function(data, LeadIndCol=2){
