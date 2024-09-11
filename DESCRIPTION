@@ -1,6 +1,6 @@
 Package: tsgc
 Title: Time Series Methods Based on Growth Curves
-Version: 0.0
+Version: 1.0.0
 Authors@R: c(person(given = "Craig", family = "Thamotheram", role = c("aut", "cre"), email = "cpt@tacindex.com"))
 Description: The 'tsgc' package provides comprehensive tools for the analysis and forecasting of epidemic trajectories.
     It is designed to model the progression of an epidemic over time while accounting for the various uncertainties
