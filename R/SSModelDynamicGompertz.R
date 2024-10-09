@@ -86,6 +86,45 @@ SSModelDynamicGompertz <- setRefClass(
         y, q = q, sea.type = sea.type, sea.period = sea.period
       )
       return(model)
+    },
+    summary = function() {
+      out <- .self$estimate(sea.type = sea.type, sea.period = sea.period)
+      if(is.null(q)){
+        qest <- out$output$model$H[, , 1]/out$output$model$Q[2, 2, 1]
+      }
+      cat("Summary of SSModelDynamicGompertz Model\n")
+      cat("--------------------------------------\n")
+      cat("Cumulated Variable:", head(y), "\n")
+      cat("Signal-to-Noise Ratio (q):", 
+          ifelse(is.null(q), paste(qest, "(estimated)"), 
+                 paste(q, ("(user specified)"))), "\n")
+      cat("Seasonal Type:", sea.type, "\n")
+      cat("Seasonal Period:", sea.period, "\n")
+      cat("Model Details:\n")
+      cat("  - Model Type: Dynamic Gompertz Curve\n")
+      cat("  - Seasonal Component: ", ifelse(sea.type == 'none', "None", "Trigonometric"), "\n")
+      cat("  - Period of Seasonality: ", ifelse(sea.type == 'none', "N/A", sea.period), "\n")
+      cat("  - Model States and Standard Errors\n")
+      print(res_q$output)
     }
   )
 )
+
+print.SSModelDynamicGompertz <- function(object) {
+  if(is.null(object$q)){
+    out <- object$estimate()#sea.type = sea.type, sea.period = sea.period)
+    qest <- out$output$model$Q[2, 2, 1]/out$output$model$H[, , 1]
+  }
+  cat("SSModelDynamicGompertz Model\n")
+  cat("\n")
+  cat("Cumulated Variable:\n")
+  print(head(object$Y))
+  cat("Number of observations:", length(object$Y))
+  cat("\n")
+  cat("Signal-to-Noise Ratio (q):", 
+      ifelse(is.null(object$q), paste(round(qest,5), "(estimated)"), 
+             paste(object$q, ("(user specified)"))), "\n")
+  cat("Seasonal components?",
+      ifelse(is.null(attr(out$output$model$terms,"specials")$SSMseasonal),
+             "No","Yes"),"\n")
+}
