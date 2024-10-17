@@ -2,7 +2,7 @@ Package: tsgc
 Title: Time Series Methods Based on Growth Curves
 Version: 1.0.0
 Authors@R: c(person(given = "Craig", family = "Thamotheram", role = c("aut", "cre"), email = "cpt@tacindex.com"),
-    person(given = "Michael", family = "Ashby", role = c("cre", "ctb"), email = "mwa22@cam.ac.uk"),
+    person(given = "Michael", family = "Ashby", role = c("ctb"), email = "mwa22@cam.ac.uk"),
     person(given = "Paul", family = "Kattuman", role = c("ctb"), email = "p.kattuman@jbs.cam.ac.uk"),
     person(given = "Andrew", family = "Harvey", role = c("ctb"), email = "ach34@cam.ac.uk"))
 Description: The 'tsgc' package provides comprehensive tools for the analysis and forecasting of epidemic trajectories.

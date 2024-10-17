@@ -40,15 +40,19 @@ SSModelBase <- setRefClass(
   "SSModelBase",
   fields = list(
     Y = "xts",
-    q = "ANY"  # No native option for numeric | NULL - see
+    q = "ANY",  # No native option for numeric | NULL - see
     # https://stackoverflow.com/questions/24363069/multiple-acceptable-classes-
     # in-reference-class-field-list
+    sea.type="ANY", 
+    sea.period="numeric"
   ),
   methods = list(
-    initialize = function(Y, q = NULL)
+    initialize = function(Y, q = NULL, sea.type="trigonometric", sea.period=7)
     {
       Y <<- Y
       q <<- q
+      sea.type <<- sea.type
+      sea.period <<- sea.period
     },
     get_model = function(y, q = NULL)
     {

@@ -321,6 +321,24 @@ FilterResults <- setRefClass(
       colnames(pred) <- c("fit","lower","upper")
 
       return(pred)
+    },
+    print=function(){
+      H <- output$model$H[, , 1]
+      Q_gamma <- output$model$Q[2, 2, 1]
+      Q_seasonal <- output$model$Q[3, 3, 1]
+      out <- .self$output
+      cat("Fitted SSModelDynamicGompertz Model Results\n")
+      cat("\n")
+      cat("  - Model States and Standard Errors\n")
+      base::print(out)
+      cat("- Variance parameter estimates\n")
+      cat("Observation equation noise:",format(H, digits = 4))
+      cat("\n")
+      cat("State transition equation noise:",format(Q_gamma, digits = 4))
+      cat("\n")
+      cat("Signal-to-Noise Ratio (q):", format(Q_gamma / H, digits = 4))
+      cat("\n")
+      cat("Seasonality noise:",format(Q_seasonal, digits = 4))
     }
   )
 )
