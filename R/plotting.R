@@ -83,7 +83,7 @@ plot_new_cases <- function(
     sea.on = TRUE, return.diff = TRUE
   )
 
-  tmp.date <- min(estimation.date.end - 4, plt.start.date)
+  tmp.date <- min(estimation.date.end - 4, as.Date(plt.start.date, format=date_format))
   s <- sprintf("%s/", format(tmp.date, "%Y-%m-%d"))
   d.plot <- cbind(
     diff(y.level.est)[s],

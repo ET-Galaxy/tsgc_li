@@ -124,6 +124,9 @@ SSModelDynamicGompertz <- setRefClass(
       cat("Seasonal components?",
           ifelse(is.null(attr(out$output$model$terms,"specials")$SSMseasonal),
                  "No","Yes"),"\n")
+    },
+    plot_diff =function(title=NULL, ylab=NULL){
+      plot(diff(.self$Y), main=title, ylab=ylab)
     }
   )
 )

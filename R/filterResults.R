@@ -323,15 +323,23 @@ FilterResults <- setRefClass(
       return(pred)
     },
     print=function(){
+      out <- .self$output
+      cat("Object of FilterResults Class\n")
+      cat("  - Model States and Standard Errors\n")
+      base::print(out)
+    },
+    summary=function(){
       H <- output$model$H[, , 1]
       Q_gamma <- output$model$Q[2, 2, 1]
       Q_seasonal <- output$model$Q[3, 3, 1]
       out <- .self$output
-      cat("Fitted SSModelDynamicGompertz Model Results\n")
+      cat("Summary of FilterResults Object\n")
+      cat("Model Details:\n")
+      cat("  - Model Type: Dynamic Gompertz Curve\n")
       cat("\n")
       cat("  - Model States and Standard Errors\n")
       base::print(out)
-      cat("- Variance parameter estimates\n")
+      cat("  - Variance parameter estimates\n")
       cat("Observation equation noise:",format(H, digits = 4))
       cat("\n")
       cat("State transition equation noise:",format(Q_gamma, digits = 4))
@@ -339,6 +347,13 @@ FilterResults <- setRefClass(
       cat("Signal-to-Noise Ratio (q):", format(Q_gamma / H, digits = 4))
       cat("\n")
       cat("Seasonality noise:",format(Q_seasonal, digits = 4))
+    }, 
+    plot=function(Y, n.ahead, confidence.level = 0.68, date_format = "%Y-%m-%d",
+                  title=NULL, plt.start.date=NULL){
+      plot_new_cases(.self, Y=Y, n.ahead=n.ahead, 
+                            confidence.level = confidence.level, 
+                            date_format = date_format,
+                            title=title, plt.start.date=plt.start.date) 
     }
   )
 )
