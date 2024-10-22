@@ -220,6 +220,60 @@ SSModelDynGompertzReinit <- setRefClass(
       )
       out[['index']] <- index(y.reinit)
       return(out)
+    },
+    summary = function() {
+      out <- .self$estimate(sea.type = sea.type, sea.period = sea.period)
+      q<-.self$q
+      dates<-index(.self$Y)
+      if(is.null(q)){
+        qest <- out$output$model$H[, , 1]/out$output$model$Q[2, 2, 1]
+      }
+      cat("Summary of SSModelDynamicGompertzReinit Model\n")
+      cat("--------------------------------------\n")
+      cat("Cumulated Variable:\n")
+      base::print(head(.self$Y))
+      cat("Signal-to-Noise Ratio (q):", 
+          ifelse(is.null(q), paste(qest, "(estimated)"), 
+                 paste(q, ("(user specified)"))), "\n")
+      cat("Model Details:\n")
+      cat("  - Model Type: Dynamic Gompertz Curve (Reinitialized) \n")
+      cat("  - Seasonal Component: ", ifelse(sea.type == 'none', "None", "Trigonometric"), "\n")
+      cat("  - Period of Seasonality: ", ifelse(sea.type == 'none', "N/A", sea.period), "\n")
+      cat("  - Dataset start date:", format(as.Date(dates[1], origin = "1970-01-01")))
+      cat("\n")
+      cat("  - Dataset end date:", format(as.Date(tail(dates,1), origin = "1970-01-01")))
+      cat("\n")
+      cat("  - Reinitialization date:",format(as.Date(.self$reinit.date, origin = "1970-01-01")))
+      cat("\n")
+      cat("  - Use presample info:", .self$use.presample.info)
+      cat("\n")
+      cat("  - Model States and Standard Errors\n")
+      base::print(out$output)
+    },
+    print=function(){
+      out <- .self$estimate()#sea.type = sea.type, sea.period = sea.period)
+      if(is.null(.self$q)){
+        qest <- out$output$model$Q[2, 2, 1]/out$output$model$H[, , 1]
+      }
+      cat("SSModelDynamicGompertzReinit Model\n")
+      cat("\n")
+      cat("Cumulated Variable:\n")
+      base::print(head(.self$Y))
+      cat("Number of total observations in dataset:", length(.self$Y))
+      cat("\n")
+      cat("Signal-to-Noise Ratio (q):", 
+          ifelse(is.null(.self$q), paste(round(qest,5), "(estimated)"), 
+                 paste(.self$q, ("(user specified)"))), "\n")
+      cat("Seasonal components?",
+          ifelse(is.null(attr(out$output$model$terms,"specials")$SSMseasonal),
+                 "No","Yes"),"\n")
+      cat("Reinit date:",format(as.Date(.self$reinit.date, origin = "1970-01-01")))
+      cat("\n")
+      cat("Use presample info:", .self$use.presample.info)
+      cat("\n")
+    },
+    plot_diff=function(title=NULL, ylab=NULL){
+      plot(diff(.self$Y), main=title, ylab=ylab)
     }
   )
 )

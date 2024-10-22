@@ -333,9 +333,13 @@ FilterResults <- setRefClass(
       Q_gamma <- output$model$Q[2, 2, 1]
       Q_seasonal <- output$model$Q[3, 3, 1]
       out <- .self$output
+      start_date <- index[1]
+      end_date <- index[length(res.reinit$index)]
       cat("Summary of FilterResults Object\n")
       cat("Model Details:\n")
-      cat("  - Model Type: Dynamic Gompertz Curve\n")
+      cat("  - Estimation start date:", format(as.Date(start_date, origin = "1970-01-01")))
+      cat("\n")
+      cat("  - Estimation end date:", format(as.Date(end_date, origin = "1970-01-01")))
       cat("\n")
       cat("  - Model States and Standard Errors\n")
       base::print(out)
