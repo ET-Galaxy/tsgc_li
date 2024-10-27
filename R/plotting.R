@@ -25,7 +25,7 @@
 #' intervals for \eqn{\ln(g_t)}.
 #'
 #' @param res Results object estimated using the \code{estimate()} method.
-#' @param Y Cumulated variable.
+#' @param Y (Only required for vanilla growth curve models) Cumulated variable.
 #' @param n.ahead Number of forecasts (i.e. number of periods ahead to forecast
 #' from end of estimation window).
 #' @param confidence.level Width of prediction interval for \eqn{\ln g_t} to
@@ -37,6 +37,9 @@
 #' @param plt.start.date First date of actual data (from estimation sample) to
 #' plot on graph.\code{NULL} (i.e. plots all data in estimation window) by
 #' default.
+#' @param series.name Name of the variable you are forecasting for the purposes
+#' of a $y$-axis label. E.g. if \code{series.name = "Cases"} the \eqn{y}-axis
+#' will show "New Cases".
 #'
 #' @importFrom ggplot2 scale_color_manual scale_linetype_manual aes labs theme
 #' @importFrom ggplot2 element_blank element_text rel scale_x_date
@@ -62,11 +65,17 @@
 #' confidence.level = 0.68, date_format = "%Y-%m-%d",
 #' title = "Forecast new cases", plt.start.date = as.Date("2020-07-13"))
 #'
+#'
+#'
 #' @export
 plot_new_cases <- function(
-  res, Y, n.ahead, confidence.level = 0.68, date_format = "%Y-%m-%d",
-  title=NULL, plt.start.date=NULL
-) {
+  res, n.ahead, Y=NULL, confidence.level = 0.68, date_format = "%Y-%m-%d",
+  title=NULL, plt.start.date=NULL, series.name="target variable")
+{
+  if (class(res)=="FilterResults") {
+  if (is.null(Y)) {
+      stop("Y is required when res is of class 'FilterResults'")
+    } else{
   Date <- Data <- Forecast <- ForecastTrend <- lower <- upper <- NULL
   if (is.null(title)) {title <- ""}
   est.date.index <- res$index %>% as.Date()
@@ -93,11 +102,11 @@ plot_new_cases <- function(
   names(d.plot) <- c('Data', 'Forecast', 'ForecastTrend')
 
   ci <- as.data.frame(cbind(zoo::coredata(y.hat.diff.final.ci[, 2:3]),
-                                (as.Date(index(y.hat.diff.final.ci),
-                                         format = date_format))))
+                            (as.Date(index(y.hat.diff.final.ci),
+                                     format = date_format))))
   colnames(ci) <- c('lower', 'upper', 'date')
   ci[, 'date'] <- as.Date(
-     ci[, 'date'], format = date_format, origin = "1970-01-01"
+    ci[, 'date'], format = date_format, origin = "1970-01-01"
   )
 
   df_plot <- as.data.frame(d.plot)
@@ -111,7 +120,7 @@ plot_new_cases <- function(
     ) +
     ggplot2::scale_color_manual(values = c("black", "grey", "#AA2045")) +
     ggplot2::geom_ribbon(data = ci, aes(x = date, ymin = lower, ymax = upper),
-                linetype = 0, linewidth = 0, fill = "#AA2045", alpha = 0.1) +
+                         linetype = 0, linewidth = 0, fill = "#AA2045", alpha = 0.1) +
     labs(x = "Date", y = "New Cases", title = title) +
     theme_economist_white(gray_bg = FALSE, base_size = 12) +
     theme(legend.title = element_blank()) +
@@ -126,8 +135,64 @@ plot_new_cases <- function(
     ggplot2::scale_linetype_manual(
       values = c("solid", "solid", "solid")) +
     ggplot2::scale_x_date(labels = scales::date_format("%d %b %y")) +
-    ggplot2::scale_size_manual(values = c(1, 1, 1))
+    ggplot2::scale_size_manual(values = c(1, 1, 1))}}
 
+  else if (class(res)=="FilterResultsLI") {
+    forecasts<-res$predict_level(n.forc=n.ahead)
+    data_xts<-res$data_xts
+    n.lag<-res$n.lag
+    out<-res$fitmod
+
+    if (is.null(plt.start.date)){plt.start.date <- head(index(data_xts), 1)}
+    # add forecasts to plotting dataframe
+    fadmits<-forecasts$trend
+    sea<-forecasts$seasonal
+    sea <- sea[,1]
+    fadmits$zero=NA
+
+    # Create smoothed admissions
+    lcadmit = lag(as.vector(data_xts$cAdmit)) %>% na.omit()
+    smldlh = predict(out$model,states='trend')$LDLhosp %>% exp %>% as.vector
+    smadmit = smldlh*lcadmit[(n.lag+1):length(lcadmit)]
+    smAdmit = smadmit %>% xts(index(data_xts[(n.lag+1):(length(lcadmit)),])+1)
+
+    #Plot forecast graph
+    df_plot<-rbind(data_xts$newAdmit,fadmits$zero)
+    df_plot$Smooth<-smAdmit
+    df_plot$Forecast<-sea
+    df_plot$ForecastTrend<-fadmits$forc
+    df_plot<-df_plot%>% subset(index(.) > plt.start.date)
+    df_plot=fortify.zoo(df_plot)
+
+    ci<-fortify.zoo(fadmits)
+
+    p2<-ggplot2::ggplot(data = df_plot, aes(x = Index)) +
+      ggplot2::geom_line(aes(y = newAdmit, color = "Data"), lwd = 0.85) +
+      ggplot2::geom_line(aes(y = Smooth, color = "Smoothed\ndata"),lwd=0.85)+
+      ggplot2::geom_line(aes(y = Forecast, color = "Forecast"), lwd = 0.85) +
+      ggplot2::geom_line(
+        aes(y = ForecastTrend, color = "Forecast\nTrend"), lwd = 0.85
+      ) +
+      ggplot2::scale_color_manual(values = c("black", "grey", "#AA2045","red")) +
+      ggplot2::geom_ribbon(data = ci, aes(x = Index, ymin = lwr, ymax = upr),
+                           linetype = 0, linewidth = 0, fill = "#AA2045", alpha = 0.1) +
+      labs(x = "Date", y = paste("New",series.name), title = title) +
+      theme_economist_white(gray_bg = FALSE, base_size = 12) +
+      theme(legend.title = element_blank()) +
+      theme(
+        text = element_text(size = rel(1.1)),
+        axis.text = element_text(size = rel(1)),
+        axis.title.y = element_text(size = rel(1),margin = margin(r=10)),
+        axis.title.x = element_text(size = rel(1),margin = margin(t=10)),
+        plot.title = element_text(margin=margin(b=5)),
+        plot.caption = element_text(size = rel(1))
+      ) +
+      ggplot2::scale_linetype_manual(
+        values = c("solid", "solid", "solid", "solid")) +
+      ggplot2::scale_x_date(labels = scales::date_format("%d %b %y")) +
+      ggplot2::scale_size_manual(values = c(1, 1, 1,1))
+    return(p2)
+  }
 }
 
 
@@ -138,7 +203,10 @@ plot_new_cases <- function(
 #' log cumulative growth rate out of the estimation sample.
 #'
 #' @param res Results object estimated using the \code{estimate()} method.
-#' @param y.eval The out-of-sample realisation of the log growth rate of the
+#' @param Y (Only required for leading indicator model.) An xts object
+#' containing the cumulative dataset with two columns: the leading
+#' indicator and the target variable, including out-of-sample data.
+#' @param y.eval (Only required for vanilla growth curve model.) The out-of-sample realisation of the log growth rate of the
 #' cumulated variable (i.e. the actual values to which the forecasts should
 #' be compared).
 #' @param n.ahead The number of time periods ahead from the end of the sample
@@ -172,38 +240,165 @@ plot_new_cases <- function(
 #'   title = "Forecast ln(g)", plt.start.date = as.Date("2020-07-13"))
 #'
 #' @export
-plot_forecast <- function(res, y.eval, n.ahead = 14,
+plot_forecast <- function(res, Y=NULL, y.eval=NULL, n.ahead = 14,
                           plt.start.date=NULL, title="", caption = "") {
-  Date <- NULL
-  model <- res$output$model
-  est.date.index <- res$index
+  if (class(res)=="FilterResults"){
+    if (is.null(y.eval)){
+      stop("y.eval is required when res is of class 'FilterResults'")
+    }
+    Date <- NULL
+    model <- res$output$model
+    est.date.index <- res$index
 
-  y <- xts::xts(res$output$model$y %>% as.numeric(), order.by = est.date.index)
-  p <- attr(res$output$model, 'p')
+    y <- xts::xts(res$output$model$y %>% as.numeric(), order.by = est.date.index)
+    p <- attr(res$output$model, 'p')
 
-  y.hat.all <- res$predict_all(n.ahead, return.all = TRUE)
-  y.pred <-  subset(y.hat.all$y.hat,index(y.hat.all$y.hat) > tail(res$index,1))
-  filtered.level <- y.hat.all$level
+    y.hat.all <- res$predict_all(n.ahead, return.all = TRUE)
+    y.pred <-  subset(y.hat.all$y.hat,index(y.hat.all$y.hat) > tail(res$index,1))
+    filtered.level <- y.hat.all$level
 
-  if (p == 1) {
-    EstimationSample <- FilteredLevel <- Forecast <- RealisedData <- NULL
-    d <- cbind(y, filtered.level, y.pred,
-               y.eval[index(y.eval)>tail(index(est.date.index),1),])
-    if (!is.null(plt.start.date)) { d <- d[index(d) > plt.start.date] }
-    d <- d[index(d) <= tail(index(y.pred),1)]
-    names(d) <- c(
-      'EstimationSample', 'FilteredLevel', 'Forecast', 'RealisedData'
-    )
+    if (p == 1) {
+      EstimationSample <- FilteredLevel <- Forecast <- RealisedData <- NULL
+      d <- cbind(y, filtered.level, y.pred,
+                 y.eval[index(y.eval)>tail(index(est.date.index),1),])
+      if (!is.null(plt.start.date)) { d <- d[index(d) > plt.start.date] }
+      d <- d[index(d) <= tail(index(y.pred),1)]
+      names(d) <- c(
+        'EstimationSample', 'FilteredLevel', 'Forecast', 'RealisedData'
+      )
 
-    df_plot <- as.data.frame(d)
+      df_plot <- as.data.frame(d)
+      df_plot$Date <- as.Date(rownames(df_plot))
+
+      p1 <- ggplot2::ggplot(data = df_plot, aes(x = Date)) +
+        ggplot2::geom_line(aes(
+          y = EstimationSample, color = "Estimation\nSample"), lwd = 0.85) +
+        ggplot2::geom_line(aes(y = FilteredLevel, color = "Filtered\nLevel"),
+                           lwd = 0.85) +
+        ggplot2::geom_line(aes(y = Forecast, color = "Forecast"), lwd = 0.85) +
+        ggplot2::geom_line(aes(y = RealisedData, color = "Realised\nData"),
+                           lwd = 0.85) +
+        ggplot2::scale_color_manual(values = c(1, 2, 3, 'grey')) +
+        scale_linetype_manual(
+          values = c("solid", "solid", "solid", "dashed")) +
+        scale_x_date(labels = scales::date_format("%d %b %y")) +
+        labs(x = "Date", y = "Log Growth Rate", caption = caption,
+             title = title
+        ) +
+        theme_economist_white(gray_bg = FALSE) +
+        scale_fill_economist() +
+        theme(legend.title = element_blank()) +
+        theme(
+          text = element_text(size = rel(1)),
+          axis.text = element_text(size = rel(1)),
+          axis.title.y = element_text(size = rel(1),margin = margin(r=10)),
+          axis.title.x = element_text(size = rel(1),margin = margin(t=10)),
+          plot.title = element_text(margin=margin(b=5)),
+          plot.caption = element_text(size = rel(1)),
+        )
+    } else if (p == 2) {
+      g_1 <- g_2 <- delta <- Forecast <- RealisedData <- NULL
+      d <- cbind(y, filtered.level, y.pred[,2],
+                 y.eval[index(y.eval)>tail(index(est.date.index),1),2])
+      d <- d[index(d) <= tail(index(y.pred),1)]
+      names(d) <- c('g_1', 'g_2', 'delta', 'Forecast', 'RealisedData')
+
+      df_plot <- as.data.frame(d)
+      df_plot$Date <- as.Date(rownames(df_plot))
+
+      p1 <- ggplot2::ggplot(data = df_plot, aes(x = Date)) +
+        ggplot2::geom_line(aes(y = g_1, color = "g_1")) +
+        ggplot2::geom_line(aes(y = g_2, color = "g_2")) +
+        ggplot2::geom_line(aes(y = g_2, color = "delta")) +
+        ggplot2::geom_line(aes(y = Forecast, color = "Forecast")) +
+        ggplot2::geom_line(aes(y = RealisedData, color = "Realised\nData")) +
+        ggplot2::scale_color_manual(
+          values = c(1, 2, 3, 4, 'grey')) +
+        ggplot2::scale_linetype_manual(
+          values = c("solid", "solid", "solid", "solid", "dashed")
+        ) +
+        ggplot2::scale_x_date(labels = scales::date_format("%d %b %y")) +
+        labs(x = "Date", y = "Log Growth Rate", caption = caption,
+             title = title
+        ) +
+        theme_economist_white(gray_bg = FALSE) +
+        scale_fill_economist() +
+        theme(legend.title = element_blank()) +
+        theme(
+          text = element_text(size = rel(1.)),
+          axis.text = element_text(size = rel(1)),
+          axis.title.y = element_text(size = rel(1),margin = margin(r=10)),
+          axis.title.x = element_text(size = rel(1),margin = margin(t=10)),
+          plot.title = element_text(margin=margin(b=5)),
+          plot.caption = element_text(size = rel(1))
+        )
+    } else { stop('NotImplemented Error') }
+
+    return(p1)
+  }
+  else{
+    if (is.null(Y)){
+      stop("Y is required when res is of class 'FilterResultsLI'")
+    }
+    out<-res$fitmod
+    data_xts<-res$data_xts
+    n.lag<-res$n.lag
+
+    old=res$data_xts[,"LDLhosp"]
+    old=old[index(old)>head(index(old),1)+n.lag]
+
+    eng_full<-add_daily_ldl(Y)
+    eng_full<-eng_full[index(eng_full)>tail(index(old),1),"LDLhosp"]
+    actual=eng_full[1:n.lag]
+
+    lcadmit = lag(as.vector(data_xts$cAdmit)) %>% na.omit()
+    smldlh = predict(out$model,states='trend')$LDLhosp
+    filtered=xts(smldlh,(head(index(data_xts),1)+n.lag)+(1:length(smldlh)))
+
+    start_date<-index(data_xts)[1]
+    end_date<-tail(index(data_xts),1)
+    data_ldl = data_xts[,c("LDLcases","LDLhosp")] %>% na.omit
+
+    data_ldl$LDLcases = lag(as.vector(data_ldl$LDLcases),n.lag)
+
+    data_ldl <- na.omit(data_ldl)
+
+    data_mat = as.matrix(data_ldl)
+    # Create forecast data (using fact have some "future" case observations)
+    forcdata <- matrix(NA,ncol=2,nrow=max(n.ahead,n.lag))
+    colnames(forcdata) = colnames(data_mat)
+    forcdata[1:n.lag,1] = as.vector(tail(data_xts,n.lag)$LDLcases)
+
+    # Extract estimate of Q from earlier model
+    Qf = out$model$Q[,,1]
+    if (is.na(res$sea.period)) {
+      forcmodel = SSModel(forcdata ~ SSMtrend(degree = 2, Q = matrix(c(0,0,0,Qf[2,2]),2,2),type = 'common')+SSMtrend(degree = 1, Q = matrix(Qf[3,3]),index=1),
+                          H = out$model$H)
+    }
+    else{
+      forcmodel = SSModel(forcdata ~ SSMtrend(degree = 2, Q = matrix(c(0,0,0,Qf[2,2]),2,2),type = 'common')+SSMseasonal(res$sea.period,Q = matrix(c(Qf[4,4],0,0,Qf[5,5]),2,2), sea.type='dummy', type='distinct')+SSMtrend(degree = 1, Q = matrix(Qf[3,3]),index=1),H = out$model$H)
+    }
+    forcout = predict(out$model,forcmodel,interval=c('prediction'),
+                      level=0.68,states=c('trend'))
+
+    trend=xts(forcout$LDLhosp[,"fit"],tail(index(old),1)+(1:n.ahead))
+
+    d.plot<-cbind(old,filtered,trend,actual)
+    colnames(d.plot)<-c('EstimationSample', 'FilteredLevel', 'Forecast', 'RealisedData')
+    if (!is.null(plt.start.date)){
+      d.plot<-d.plot[index(d.plot)>=plt.start.date]
+      df_plot <- as.data.frame(d.plot)
+    } else{
+      df_plot <- as.data.frame(d.plot)
+    }
     df_plot$Date <- as.Date(rownames(df_plot))
 
-    p1 <- ggplot2::ggplot(data = df_plot, aes(x = Date)) +
+    ggplot2::ggplot(data = df_plot, aes(x = Date)) +
       ggplot2::geom_line(aes(
         y = EstimationSample, color = "Estimation\nSample"), lwd = 0.85) +
       ggplot2::geom_line(aes(y = FilteredLevel, color = "Filtered\nLevel"),
                          lwd = 0.85) +
-      ggplot2::geom_line(aes(y = Forecast, color = "Forecast"), lwd = 0.85) +
+      ggplot2::geom_line(aes(y = Forecast, color = "Forecast\nTrend"), lwd = 0.85) +
       ggplot2::geom_line(aes(y = RealisedData, color = "Realised\nData"),
                          lwd = 0.85) +
       ggplot2::scale_color_manual(values = c(1, 2, 3, 'grey')) +
@@ -224,45 +419,7 @@ plot_forecast <- function(res, y.eval, n.ahead = 14,
         plot.title = element_text(margin=margin(b=5)),
         plot.caption = element_text(size = rel(1)),
       )
-  } else if (p == 2) {
-    g_1 <- g_2 <- delta <- Forecast <- RealisedData <- NULL
-    d <- cbind(y, filtered.level, y.pred[,2],
-               y.eval[index(y.eval)>tail(index(est.date.index),1),2])
-    d <- d[index(d) <= tail(index(y.pred),1)]
-    names(d) <- c('g_1', 'g_2', 'delta', 'Forecast', 'RealisedData')
-    
-    df_plot <- as.data.frame(d)
-    df_plot$Date <- as.Date(rownames(df_plot))
-
-    p1 <- ggplot2::ggplot(data = df_plot, aes(x = Date)) +
-      ggplot2::geom_line(aes(y = g_1, color = "g_1")) +
-      ggplot2::geom_line(aes(y = g_2, color = "g_2")) +
-      ggplot2::geom_line(aes(y = g_2, color = "delta")) +
-      ggplot2::geom_line(aes(y = Forecast, color = "Forecast")) +
-      ggplot2::geom_line(aes(y = RealisedData, color = "Realised\nData")) +
-      ggplot2::scale_color_manual(
-        values = c(1, 2, 3, 4, 'grey')) +
-      ggplot2::scale_linetype_manual(
-        values = c("solid", "solid", "solid", "solid", "dashed")
-      ) +
-      ggplot2::scale_x_date(labels = scales::date_format("%d %b %y")) +
-      labs(x = "Date", y = "Log Growth Rate", caption = caption,
-           title = title
-      ) +
-      theme_economist_white(gray_bg = FALSE) +
-      scale_fill_economist() +
-      theme(legend.title = element_blank()) +
-      theme(
-        text = element_text(size = rel(1.)),
-        axis.text = element_text(size = rel(1)),
-        axis.title.y = element_text(size = rel(1),margin = margin(r=10)),
-        axis.title.x = element_text(size = rel(1),margin = margin(t=10)),
-        plot.title = element_text(margin=margin(b=5)),
-        plot.caption = element_text(size = rel(1))
-      )
-  } else { stop('NotImplemented Error') }
-
-  return(p1)
+  }
 }
 
 #' @title Plots the growth rates and slope of the log cumulative growth rate
@@ -311,7 +468,13 @@ plot_gy_components <- function(res, plt.start.date = NULL,
                                smoothed = FALSE, title = NULL){
   Date <- Value <- Variable <- NULL
   # Determine plot start date
-  if(is.null(plt.start.date)) plt.start.date <- res$index[1]
+  if(is.null(plt.start.date)) {
+    if (class(res)=="FilterResults"){
+      plt.start.date <- res$index[1]
+    } else {
+      plt.start.date <- index(res$data_xts)[1]
+    }
+    }
 
   # Get gy.t, g.t and gamma
   gy.components <- res$get_growth_y(return.components = TRUE, smoothed =
@@ -390,9 +553,15 @@ plot_gy_components <- function(res, plt.start.date = NULL,
 plot_gy_ci <- function(res, plt.start.date = NULL, smoothed = FALSE,
                        title = NULL, series.name = NULL, pad.right = NULL){
   Date <- fit <- upper <- lower <- NULL
-  
+
   # Determine plot start date
-  if(is.null(plt.start.date)) plt.start.date <- res$index[1]
+  if(is.null(plt.start.date)) {
+    if (class(res)=="FilterResults"){
+      plt.start.date <- res$index[1]
+    } else {
+      plt.start.date <- index(res$data_xts)[1]
+    }
+  }
 
   # Get confidence intervals to plot
   gy.ci<- res$get_gy_ci(smoothed = smoothed)
@@ -455,9 +624,13 @@ plot_gy_ci <- function(res, plt.start.date = NULL, smoothed = FALSE,
 #' sample.
 #'
 #' @param res Results object estimated using the \code{estimate()} method.
-#' @param Y Values of the cumulated variable to be used in the estimation
-#' window.
-#' @param Y.eval Values of the cumulated variable to be used in the holdout
+#' @param Y (For vanilla growth curve) Values of the cumulated variable to be
+#' used in the estimation window.
+#' (For leading indicator) An xts object containing the cumulative dataset with
+#' two columns: the leading indicator and the target variable, including
+#' out-of-sample data.
+#' @param Y.eval (Only required for vanilla growth curve estimation.)
+#' Values of the cumulated variable to be used in the holdout
 #' sample (i.e. to which the forecasts should be compared to).
 #' @param confidence.level Width of prediction interval for \eqn{\ln(g_t)} to
 #' use in forecasts of \eqn{y_t = \Delta Y_t}. Default is 0.68, which is
@@ -466,7 +639,7 @@ plot_gy_ci <- function(res, plt.start.date = NULL, smoothed = FALSE,
 #' of a $y$-axis label. E.g. if \code{series.name = "Cases"} the \eqn{y}-axis
 #' will show "New Cases".
 #' @param date_format Date format, e.g. \code{'\%Y-\%m-\%d'}, which is the
-#' default.
+#' default. Only needed for Dynamic Gompertz model.
 #' @param title Title for forecast plot. Enter as text string. \code{NULL}
 #' (i.e. no title) by default.
 #' @param caption Caption for forecast plot. Enter as text string. \code{NULL}
@@ -499,87 +672,154 @@ plot_gy_ci <- function(res, plt.start.date = NULL, smoothed = FALSE,
 #' plot_holdout(res = res, Y = gauteng[idx.est], Y.eval = gauteng[idx.eval])
 #'
 #' @export
-plot_holdout <- function(res, Y, Y.eval, confidence.level = 0.68,
-                         date_format = "%Y-%m-%d", series.name = NULL,
+plot_holdout <- function(res, Y, Y.eval=NULL, n.ahead=NULL, confidence.level = 0.68,
+                         date_format = "%Y-%m-%d", series.name = "target variable",
                          title= NULL, caption = NULL) {
-  Date <- Actual <- Forecast <- ForecastTrend <- lower <- upper <- NULL
+  if (class(res)=="FilterResults"){
+    if (is.null(Y.eval)) {
+      stop("Y.eval is required when res is of class 'FilterResults'")
+    } else{
+      Date <- Actual <- Forecast <- ForecastTrend <- lower <- upper <- NULL
 
-  model <- res$output$model
-  est.date.index <- res$index
+      model <- res$output$model
+      est.date.index <- res$index
 
-  y.level.est <- Y[est.date.index]
+      y.level.est <- Y[est.date.index]
 
-  p <- attr(res$output$model, 'p')
-  if(p!=1) { stop('NotImplementedError') }
+      p <- attr(res$output$model, 'p')
+      if(p!=1) { stop('NotImplementedError') }
 
-  n.ahead <- tail(index(Y.eval),1)-tail(index(y.level.est),1)
+      n.ahead <- tail(index(Y.eval),1)-tail(index(y.level.est),1)
 
-  y.eval.diff <- diff(Y.eval) %>% na.omit
+      y.eval.diff <- diff(Y.eval) %>% na.omit
 
-  est.date.index <- res$index %>% as.Date()
-  estimation.date.end <- tail(est.date.index, 1)
+      est.date.index <- res$index %>% as.Date()
+      estimation.date.end <- tail(est.date.index, 1)
 
-  y.hat.diff.final.ci <- res$predict_level(
-    y.cum = y.level.est, n.ahead = n.ahead, confidence_level = confidence.level,
-    return.diff = TRUE
-  )
-  y.hat.diff.final <- res$predict_level(
-    y.cum = y.level.est, n.ahead = n.ahead, confidence_level = confidence.level,
-    sea.on = TRUE,
-    return.diff = TRUE
-  )
+      y.hat.diff.final.ci <- res$predict_level(
+        y.cum = y.level.est, n.ahead = n.ahead, confidence_level = confidence.level,
+        return.diff = TRUE
+      )
+      y.hat.diff.final <- res$predict_level(
+        y.cum = y.level.est, n.ahead = n.ahead, confidence_level = confidence.level,
+        sea.on = TRUE,
+        return.diff = TRUE
+      )
 
-  d <- cbind(
-    y.eval.diff[index(y.eval.diff)>estimation.date.end,],
-    y.hat.diff.final[, 1],
-    y.hat.diff.final.ci[, 1]
-  )
-  names(d) <- c('Actual', 'Forecast', 'ForecastTrend')
+      d <- cbind(
+        y.eval.diff[index(y.eval.diff)>estimation.date.end,],
+        y.hat.diff.final[, 1],
+        y.hat.diff.final.ci[, 1]
+      )
+      names(d) <- c('Actual', 'Forecast', 'ForecastTrend')
 
-  df_plot <- as.data.frame(d)
-  df_plot$Date <- as.Date(rownames(df_plot), format = date_format)
+      df_plot <- as.data.frame(d)
+      df_plot$Date <- as.Date(rownames(df_plot), format = date_format)
 
-  d.eval <- na.omit(d)
-  mape.trend <- 100*(abs(d.eval$Actual - d.eval$`ForecastTrend`)/
-                       d.eval$Actual) %>% mean %>% round(2)
-  mape.sea <- 100*(abs(d.eval$Actual - d.eval$Forecast)/d.eval$Actual) %>%
-    mean %>% round(2)
+      d.eval <- na.omit(d)
+      mape.trend <- 100*(abs(d.eval$Actual - d.eval$`ForecastTrend`)/
+                           d.eval$Actual) %>% mean %>% round(2)
+      mape.sea <- 100*(abs(d.eval$Actual - d.eval$Forecast)/d.eval$Actual) %>%
+        mean %>% round(2)
 
-  ci <- as.data.frame(cbind(zoo::coredata(y.hat.diff.final.ci[, 2:3]),
-                            (as.Date(index(y.hat.diff.final.ci),
-                                     format = date_format))))
-  colnames(ci) <- c('lower', 'upper', 'date')
-  ci[, 'date'] <- as.Date(ci[, 'date'], format = date_format,
-                          origin = "1970-01-01")
+      ci <- as.data.frame(cbind(zoo::coredata(y.hat.diff.final.ci[, 2:3]),
+                                (as.Date(index(y.hat.diff.final.ci),
+                                         format = date_format))))
+      colnames(ci) <- c('lower', 'upper', 'date')
+      ci[, 'date'] <- as.Date(ci[, 'date'], format = date_format,
+                              origin = "1970-01-01")
 
-  p1 <- ggplot2::ggplot(data = df_plot, aes(x = Date)) +
-    ggplot2::geom_line(aes(y = Actual, color = "Actual"),lwd = 0.85) +
-    ggplot2::geom_line(aes(y = Forecast, color = "Forecast"),lwd = 0.85) +
-    ggplot2::geom_line(
-      aes(y = ForecastTrend, color = "Forecast\nTrend"),lwd = 0.85) +
-    ggplot2::scale_color_manual(values = c("black", "grey", "#AA2045")) +
-    ggplot2::geom_ribbon(data = ci, aes(x = date, ymin = lower, ymax = upper),
-                         linetype = 0, linewidth = 0, fill = "#AA2045",
-                         alpha = 0.1) +
-    labs(x = "Date", y = paste("New",series.name), title = title,
-         subtitle = paste("MAPE: ",mape.sea,"%. Trend MAPE: ",
-                          mape.trend,"%.",sep="")) +
-    theme_economist_white(gray_bg = FALSE, base_size = 14) +
-    theme(legend.title = element_blank()) +
-    theme(
-      text = element_text(size = rel(1)),
-      axis.text = element_text(size = rel(1)),
-      axis.title.y = element_text(size = rel(1), margin = margin(r=10)),
-      axis.title.x = element_text(size = rel(1), margin = margin(t=10)),
-      plot.title = element_text(margin=margin(b=5)),
-      plot.subtitle = element_text(
-        size = rel(1), hjust=0,  margin = margin(t=3))
-    ) +
-    scale_linetype_manual(
-      values = c("solid", "solid", "solid")) +
-    scale_x_date(labels = scales::date_format("%d %b %y")) +
-    scale_size_manual(values = c(1, 1.5, 1))
+      p1 <- ggplot2::ggplot(data = df_plot, aes(x = Date)) +
+        ggplot2::geom_line(aes(y = Actual, color = "Actual"),lwd = 0.85) +
+        ggplot2::geom_line(aes(y = Forecast, color = "Forecast"),lwd = 0.85) +
+        ggplot2::geom_line(
+          aes(y = ForecastTrend, color = "Forecast\nTrend"),lwd = 0.85) +
+        ggplot2::scale_color_manual(values = c("black", "grey", "#AA2045")) +
+        ggplot2::geom_ribbon(data = ci, aes(x = date, ymin = lower, ymax = upper),
+                             linetype = 0, linewidth = 0, fill = "#AA2045",
+                             alpha = 0.1) +
+        labs(x = "Date", y = paste("New",series.name), title = title,
+             subtitle = paste("MAPE: ",mape.sea,"%. Trend MAPE: ",
+                              mape.trend,"%.",sep="")) +
+        theme_economist_white(gray_bg = FALSE, base_size = 14) +
+        theme(legend.title = element_blank()) +
+        theme(
+          text = element_text(size = rel(1)),
+          axis.text = element_text(size = rel(1)),
+          axis.title.y = element_text(size = rel(1), margin = margin(r=10)),
+          axis.title.x = element_text(size = rel(1), margin = margin(t=10)),
+          plot.title = element_text(margin=margin(b=5)),
+          plot.subtitle = element_text(
+            size = rel(1), hjust=0,  margin = margin(t=3))
+        ) +
+        scale_linetype_manual(
+          values = c("solid", "solid", "solid")) +
+        scale_x_date(labels = scales::date_format("%d %b %y")) +
+        scale_size_manual(values = c(1, 1.5, 1))
+      return(p1)
+    }
+  }
+  else if (class(res)=="FilterResultsLI"){
+    if (is.null(n.ahead)) {
+      stop("n.ahead is required when res is of class 'FilterResultsLI'")
+    } else{
+      forecasts<-res$predict_level(n.forc=n.ahead)
+      fadmits<-forecasts$trend    #trend
+      sea<-forecasts$seasonal     #seasonal
 
+      end_date<-tail(index(res$data_xts),1)
+      sea<-sea[,1] #get the forecast column
 
-  return(p1)
+      future_data<-add_daily_ldl(Y,LeadIndCol = res$LeadIndCol) %>% subset(index(.) > end_date)
+      data_validation<-future_data[1:n.ahead, c("cAdmit", "newAdmit")]
+
+      newAdmit_validation<-data_validation[,c("newAdmit")]
+      compare<-cbind(newAdmit_validation,fadmits[,1], sea)
+      names(compare)<-c("Actual", "ForecastTrend", "Forecast")
+
+      mape.trend <- 100*(abs(compare$Actual - compare$ForecastTrend)/
+                           compare$Actual) %>% mean %>% round(4)
+      mape.sea <- 100*(abs(compare$Actual - compare$Forecast)/compare$Actual) %>%
+        mean %>% round(4)
+
+      ci<-fadmits[,-1]
+      colnames(ci) <- c('lower', 'upper')
+
+      df_plot <- as.data.frame(compare)
+      df_plot$Date <- as.Date(rownames(df_plot), format="%Y-%m-%d")
+
+      ci_plot <- as.data.frame(ci)
+      ci_plot$Date <- as.Date(rownames(ci_plot), format = "%Y-%m-%d")
+
+      p1<-ggplot2::ggplot(data = df_plot, aes(x = Date)) +
+        ggplot2::geom_line(aes(y = Actual, color = "Actual"),lwd = 0.85) +
+        ggplot2::geom_line(aes(y = Forecast, color = "Forecast"),lwd = 0.85) +
+        ggplot2::geom_line(
+          aes(y = ForecastTrend, color = "Forecast\nTrend"),lwd = 0.85) +
+        ggplot2::scale_color_manual(values = c("black", "grey", "#AA2045")) +
+        ggplot2::geom_ribbon(data = ci_plot, aes(x = Date, ymin = lower, ymax = upper),linetype = 0, linewidth = 0, fill = "#AA2045",
+                             alpha = 0.1) +
+        labs(x = "Date", y = paste("New",series.name), title = title,
+             subtitle = paste("MAPE: ",mape.sea,"%. Trend MAPE: ",
+                              mape.trend,"%.",sep="")) +
+        theme_economist_white(gray_bg = FALSE, base_size = 14) +
+        theme(legend.title = element_blank()) +
+        theme(
+          text = element_text(size = rel(1)),
+          axis.text = element_text(size = rel(1)),
+          axis.title.y = element_text(size = rel(1), margin = margin(r=10)),
+          axis.title.x = element_text(size = rel(1), margin = margin(t=10)),
+          plot.title = element_text(margin=margin(b=5)),
+          plot.subtitle = element_text(
+            size = rel(1), hjust=0,  margin = margin(t=3))
+        ) +
+        scale_linetype_manual(
+          values = c("solid", "solid", "solid")) +
+        scale_x_date(labels = scales::date_format("%d %b %y")) +
+        scale_size_manual(values = c(1, 1.5, 1))
+
+      return(p1)
+    }
+  }
 }
+
