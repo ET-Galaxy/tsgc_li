@@ -46,7 +46,6 @@ setOldClass("KFS")
 #'
 #' @examples
 #' library(tsgc)
-#' data(gauteng,package="tsgc")
 #' idx.est <- zoo::index(gauteng) <= as.Date("2020-07-06")
 #'
 #' # Specify a model

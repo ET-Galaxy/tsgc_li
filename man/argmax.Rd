@@ -14,7 +14,7 @@ ordered in decreasing order. Default is \code{TRUE}. Setting this to
 \code{FALSE} would find the minimum.}
 }
 \value{
-The maxmium value and its index.
+The maximum value and its index.
 }
 \description{
 Something similar to Python's argmax.

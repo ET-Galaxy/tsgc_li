@@ -27,36 +27,36 @@ initial states appropriately. See the vignette for details.
 use.presample.info=TRUE)} Create an instance of the
 \code{SSModelDynGompertzReinit} class.
 \subsection{Parameters}{\itemize{
-\item{\code{Y} The cumulated variable.}
-\item{\code{q} The signal-to-noise ratio (ratio of slope to irregular
+ \item{\code{Y} The cumulated variable.}
+ \item{\code{q} The signal-to-noise ratio (ratio of slope to irregular
 variance). Defaults to \code{'NULL'}, in which case no signal-to-noise
 ratio will be imposed. Instead, it will be estimated.}
-\item{\code{reinit.date} The reinitialisation date \eqn{r}. Should be
+ \item{\code{reinit.date} The reinitialisation date \eqn{r}. Should be
 specified as an object of class \code{"Date"}. Must be specified.}
-\item{\code{original.results} Rather than re-estimating the model up
+       \item{\code{original.results} Rather than re-estimating the model up
 to the \code{reinit.date}, a \code{FilterResults} class object can be
 specified here and the parameters for the reinitialisation will be taken
 from this object. Default is \code{NULL}. This parameter is optional.}
-\item{\code{use.presample.info}  Logical value denoting whether or
+       \item{\code{use.presample.info}  Logical value denoting whether or
 not to use information from before the reinitialisation date in the
 reinitialisation procedure. Default is \code{TRUE}. If \code{FALSE}, the
 model is estimated from scratch from the reinitialisation date and no
 attempt to use information from before the reinitialisation date is made.}
-}}
+     }}
 }
 \item{\code{get_model(y, q=NULL, sea.type = NULL, sea.period)} Retrieves
 the model object, which is a dynamic Gompertz curve model reinitialised at
 \code{self$reinit.date}.
 \subsection{Parameters}{\itemize{
-\item{\code{y} The cumulated variable.}
-\item{\code{q} The signal-to-noise ratio (ratio of slope to irregular
+ \item{\code{y} The cumulated variable.}
+ \item{\code{q} The signal-to-noise ratio (ratio of slope to irregular
 variance). Defaults to \code{'NULL'}, in which case no signal-to-noise ratio
 will be imposed. Instead, it will be estimated.}
-\item{\code{sea.type} Seasonal type. Options are \code{'trigonometric'} and
+ \item{\code{sea.type} Seasonal type. Options are \code{'trigonometric'} and
 \code{'none'}. \code{'trigonometric'} will yield a model with a
 trigonometric seasonal component and \code{'none'} will yield a model with
 no seasonal component.}
-\item{\code{sea.period}  The period of seasonality. For a day-of-the-week
+ \item{\code{sea.period}  The period of seasonality. For a day-of-the-week
 effect with daily data, this would be 7. Not required if
 \code{sea.type = 'none'}.}
 }}

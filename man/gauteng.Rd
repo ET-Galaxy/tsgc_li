@@ -3,18 +3,18 @@
 \docType{data}
 \name{gauteng}
 \alias{gauteng}
-\title{Cumlative cases of Covid-19 in the South African provence of Gauteng.}
+\title{Cumulative cases of Covid-19 in the South African province of Gauteng.}
 \format{
-An object of class \code{"xts"};
+An object of class `"xts"`;
 \describe{
-\item{Cases}{Cumulative cases of Covid-19 from 10th March 2020}
+  \item{Cases}{Cumulative cases of Covid-19 from 10th March 2020}
 }
 }
 \usage{
 data(gauteng)
 }
 \description{
-Cumlative cases of Covid-19 in the South African provence of Gauteng.
+Cumulative cases of Covid-19 in the South African province of Gauteng.
 }
 \examples{
 data(gauteng)
@@ -22,6 +22,6 @@ data(gauteng)
 plot(diff(gauteng))
 }
 \references{
-tba
+Downloaded from https://sacoronavirus.co.za/
 }
 \keyword{datasets}

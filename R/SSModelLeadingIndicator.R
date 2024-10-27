@@ -63,56 +63,41 @@ SSModelLeadingIndicator <- setRefClass(
     Y = "ANY",
     q = "ANY",
     n.lag = "numeric",
-    LeadIndCol= "numeric"
+    LeadIndCol ="numeric"
   ),
   methods = list(
-    initialize = function(Y, n.lag, LeadIndCol=1, q = NA)
+    initialize = function(Y, n.lag, q = NA,LeadIndCol=1)
     {
       "Create an instance of the \\code{SSModelLeadingIndicator} class.
        \\subsection{Parameters}{\\itemize{
         \\item{\\code{Y} The cumulated leading indiactor variable and target variable.}
-        \\item{\\code{start_date} The start date \\eqn{r}. Should
-        be specified as an object of class \\code{\"Date\"}.}
-        \\item{\\code{end_date} The end date \\eqn{r}. Should
-        be specified as an object of class \\code{\"Date\"}. Must be specified
-        if \\code{original.results = NULL} and
-        \\code{use.pre.sample.info = TRUE}.}
         \\item{\\code{n.lag} Number of days to lag the leading indicator.}
-        \\item{\\code{LeadIndCol} The column in \\code{Y} that contains the leading indicator}
         \\item{\\code{q} The signal-to-noise ratio (ratio of slope to irregular
          variance). Defaults to \\code{'NULL'}, in which case no
          signal-to-noise ratio will be imposed. Instead, it will be estimated.}
+         \\item{\\code{LeadIndCol} The column in \\code{Y} that contains the leading indicator}
       }}
-      \\subsection{Usage}{\\code{SSModelDynGompertzReinit$new(y, q = 0.005,
-      reinit.date = as.Date(\"2021-05-12\",format = date.format))}}"
+      \\subsection{Usage}{\\code{SSModelLeadingIndicator(Y=y,n.lag = n.lag,q=q,LeadIndCol=1)}}"
       Y <<- Y
       q <<- q
       n.lag <<- n.lag
       LeadIndCol <<- LeadIndCol
     },
-    get_model = function(
+    estimate = function(
       sea.period = 7
-    )
+      )
     {
     "Retrieves the model object.
-       \\subsection{Parameters}{\\itemize{
-        \\item{\\code{y} The cumulated variable.}
-        \\item{\\code{q} The signal-to-noise ratio (ratio of slope to irregular
-        variance). Defaults to \\code{'NULL'}, in which case no signal-to-noise
-        ratio will be imposed. Instead, it will be estimated.}
-        \\item{\\code{sea.type} Seasonal type. Options are
-        \\code{'trigonometric'} and \\code{'none'}. \\code{'trigonometric'} will
-         yield a model with a trigonometric seasonal component and
-         \\code{'none'} will yield a model with no seasonal component.}
         \\item{\\code{sea.period}  The period of seasonality. For a
-        day-of-the-week effect with daily data, this would be 7. Not required
-        if \\code{sea.type = 'none'}.}
+        day-of-the-week effect with daily data, this would be 7. If seasonality
+        is not required, input \\code{NA}.}
       }}
-      \\subsection{Return Value}{\\code{KFS} model object.}"
+      \\subsection{Return Value}{\\code{FilterResultsLI} object.}"
 
       # Compute LDL and lag data appropriately
+      y<-add_daily_ldl(Y,LeadIndCol=LeadIndCol)
 
-      data_ldl = Y[c("LDLcases","LDLhosp")] %>% na.omit
+      data_ldl = y[,c("LDLcases","LDLhosp")]
 
       data_ldl$LDLcases = lag(as.vector(data_ldl$LDLcases),n.lag)
 
@@ -185,6 +170,12 @@ SSModelLeadingIndicator <- setRefClass(
       # Apply the Kalman filter and smoother to the fitted model
       out = KFS(fit$model)
 
-      return(out)}
+      results <- FilterResultsLI$new(
+        data_xts = y,
+        fitmod = out,
+        n.lag=n.lag,
+        sea.period=sea.period,
+        LeadIndCol =LeadIndCol)
+      return(results)}
   )
 )

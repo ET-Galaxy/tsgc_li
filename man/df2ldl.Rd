@@ -10,13 +10,13 @@ df2ldl(dt)
 \item{dt}{Cumulated data series.}
 }
 \value{
-A dataframe of log growth rates of the cumulated variable which has
+A data frame of log growth rates of the cumulated variable which has
 been inputted via the parameter \code{dt}.
 }
 \description{
 Helper method to compute the log growth rates of cumulated
 variables. It will compute the log cumulative growth rate for each column in
-the dataframe.
+the data frame.
 }
 \examples{
 library(tsgc)

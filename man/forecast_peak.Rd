@@ -22,7 +22,7 @@ Since Harvey and Kattuman (2021) show that \deqn{g_{y,t+\ell|T}
 \eqn{\ell} is given by
 \deqn{\ell = \frac{\ln(-\gamma_{T|T})-\delta_{T|T}}{\gamma_{T|T}}.} This is
 predicated on \eqn{\gamma_{T|T}<0}, else there is super-exponential growth
-an no peak in sight. Of course, it only makes sense to investigate an
+and no peak in sight. Of course, it only makes sense to investigate an
 upcoming peak for \eqn{g_{y,T|T}>0} (when cases are growing). The estimates
 of \eqn{\delta_{T|T}} and \eqn{\gamma_{T|T}} are extracted from the
 \code{KFS} object passed to the function.

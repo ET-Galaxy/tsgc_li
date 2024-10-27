@@ -63,7 +63,7 @@ for the states.
 (and filtered, where applicable) level
 of \eqn{y} (\code{y.hat}), \eqn{\delta} (\code{level.t.t}),
 \eqn{\gamma} (\code{slope.t.t}), vector of states including the
-seasonals where applicable (\code{a.t.t}) and covaraince matrix of all
+seasonals where applicable (\code{a.t.t}) and covariance matrix of all
 states including seasonals where applicable (\code{P.t.t}).}}
 
 \item{\code{predict_level(
@@ -72,21 +72,21 @@ states including seasonals where applicable (\code{P.t.t}).}}
   confidence_level,
   sea.on = FALSE,
   return.diff = FALSE
-)}}{Forecast the incidence of the cumulated variable. This function returns
-the forecast incidence, \eqn{y}, of the cumulated variable \eqn{Y}. For
+)}}{Forecast the cumulated variable or the incidence of it. This function returns
+the forecast of the cumulated variable \eqn{Y}, or the forecast of the incidence of the cumulated variable, \eqn{y}. For
 example, in the case of an epidemic, \eqn{y} might be daily new cases of
 the disease and
  \eqn{Y} the cumulative number of recorded infections.
  \subsection{Parameters}{\itemize{
   \item{\code{y.cum} The cumulated variable.}
-  \item{\code{n.ahead} The number of forecasts you wish to create from
-  the end of your sample period.}
+  \item{\code{n.ahead} The number of periods ahead you wish to forecast from
+  the end of the estimation window.}
   \item{\code{confidence_level} The confidence level for the log growth
    rate that should be used to compute
   the forecast intervals of \eqn{y}.}
-  \item{\code{return.diff} Logical value indicating whether to return
-  \eqn{y} or the first difference of
-  \eqn{y} (e.g. the change in daily new cases). Default is
+  \item{\code{return.diff} Logical value indicating whether to return the cumulated variable,
+  \eqn{Y}, or the incidence of it,
+  \eqn{y} (i.e., the first difference of the cumulated variable). Default is
   \code{FALSE}.}
 }}
 \subsection{Return Value}{\code{xts} object containing the point
@@ -108,7 +108,7 @@ model <- SSModelDynamicGompertz$new(Y = gauteng[idx.est], q = 0.005)
 res <- model$estimate()
 # Print estimation results
 res$print_estimation_results()
-# Forecast 7 days ahead from the model
+# Forecast 7 days ahead from the end of the estimation window
 res$predict_level(y.cum = gauteng[idx.est], n.ahead = 7,
   confidence_level = 0.68)
 # Forecast 7 days ahead from the model and return filtered states

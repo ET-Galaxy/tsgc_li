@@ -12,15 +12,15 @@ Class for dynamic Gompertz curve state space model object.
 \code{get_model(y, q = NULL, sea.type = 'trigonometric', sea.period = 7)}
 Retrieves the model object.
 \subsection{Parameters}{\itemize{
-\item{\code{y} The cumulated variable.}
-\item{\code{q} The signal-to-noise ratio (ratio of slope to irregular
+ \item{\code{y} The cumulated variable.}
+ \item{\code{q} The signal-to-noise ratio (ratio of slope to irregular
 variance). Defaults to \code{'NULL'}, in which case no signal-to-noise ratio
 will be imposed. Instead, it will be estimated.}
-\item{\code{sea.type} Seasonal type. Options are \code{'trigonometric'} and
+ \item{\code{sea.type} Seasonal type. Options are \code{'trigonometric'} and
 \code{'none'}. \code{'trigonometric'} will yield a model with a trigonometric
 seasonal component and \code{'none'} will yield a model with no seasonal
 component.}
-\item{\code{sea.period}  The period of seasonality. For a day-of-the-week
+ \item{\code{sea.period}  The period of seasonality. For a day-of-the-week
 effect with daily data, this would be 7. Not required if
 \code{sea.type = 'none'}.}
 }}

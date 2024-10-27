@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{reinitialise_dataframe}
 \alias{reinitialise_dataframe}
-\title{Reinitialise a dataframe by subtracting the \code{reinit.date} row from
+\title{Reinitialise a data frame by subtracting the `reinit.date` row from
 all columns}
 \usage{
 reinitialise_dataframe(dt, reinit.date)
@@ -13,10 +13,10 @@ reinitialise_dataframe(dt, reinit.date)
 \item{reinit.date}{Reinitialisation date. E.g. \samp{'2021-05-12'}.}
 }
 \value{
-The reinitialised dataframe
+The reinitialised data frame
 }
 \description{
-Reinitialise a dataframe by subtracting the \code{reinit.date} row from
+Reinitialise a data frame by subtracting the `reinit.date` row from
 all columns
 }
 \examples{

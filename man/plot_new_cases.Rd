@@ -7,8 +7,8 @@ variable)}
 \usage{
 plot_new_cases(
   res,
-  Y,
   n.ahead,
+  Y = NULL,
   confidence.level = 0.68,
   date_format = "\%Y-\%m-\%d",
   title = NULL,
@@ -18,10 +18,10 @@ plot_new_cases(
 \arguments{
 \item{res}{Results object estimated using the \code{estimate()} method.}
 
-\item{Y}{Cumulated variable.}
-
 \item{n.ahead}{Number of forecasts (i.e. number of periods ahead to forecast
 from end of estimation window).}
+
+\item{Y}{Cumulated variable.}
 
 \item{confidence.level}{Width of prediction interval for \eqn{\ln g_t} to
 use in forecasts of \eqn{y_t = \Delta Y_t}. Default is 0.68, which is

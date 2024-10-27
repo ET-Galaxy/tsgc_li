@@ -8,7 +8,8 @@ variable) over a holdout sample.}
 plot_holdout(
   res,
   Y,
-  Y.eval,
+  Y.eval = NULL,
+  n.ahead = NULL,
   confidence.level = 0.68,
   date_format = "\%Y-\%m-\%d",
   series.name = NULL,
