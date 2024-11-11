@@ -15,6 +15,7 @@
 #  http://www.r-project.org/Licenses/
 
 setOldClass("KFS")
+
 #' @title Class for re-initialised dynamic Gompertz curve model
 #' @description  This class allows the implementation of the reinitialisation
 #' procedure described in the vignette and summarised below.
@@ -105,7 +106,7 @@ setOldClass("KFS")
 #' @exportClass SSModelDynGompertzReinit
 SSModelDynGompertzReinit <- setRefClass(
   "SSModelDynGompertzReinit",
-  contains="SSModelBase",
+  contains="SSModelDynamicGompertz",
   fields = list(
     reinit.date = "ANY",
     original.results = "ANY",
@@ -113,7 +114,7 @@ SSModelDynGompertzReinit <- setRefClass(
   ),
   methods = list(
     initialize = function(Y, q = NULL, reinit.date=NULL, original.results=NULL,
-      use.presample.info=TRUE)
+                          use.presample.info=TRUE)
     {
       "Create an instance of the \\code{SSModelDynGompertzReinit} class.
        \\subsection{Parameters}{\\itemize{
@@ -138,10 +139,10 @@ SSModelDynGompertzReinit <- setRefClass(
       }}
       \\subsection{Usage}{\\code{SSModelDynGompertzReinit$new(y, q = 0.005,
       reinit.date = as.Date(\"2021-05-12\",format = date.format))}}"
+      callSuper(Y, q)
       reinit.date <<- reinit.date
       original.results <<- original.results
       use.presample.info <<- use.presample.info
-      callSuper(Y, q)
     },
     get_model = function(y, q=NULL, sea.type = NULL, sea.period)
     {
@@ -164,13 +165,13 @@ SSModelDynGompertzReinit <- setRefClass(
       # 4.1. Index for reinitialisation, t_0
       stopifnot(length(Y[reinit.date]) == 1)
       Y.t.r_0 <- as.numeric(Y[reinit.date - 1])
-
+      
       # 4.2 Reinitialisation:
       #   ln g_t^r = ln g_t + ln (Y_{t-1}/Y_{t-1}^r), where Y_t^r=Y_t-Y_{r_0}.
       idx.dates <- (index(y) > reinit.date)
       lag.Y <- stats::lag(Y)[idx.dates]
       y.reinit <- y[index(y) > reinit.date] + log(lag.Y / (lag.Y - Y.t.r_0))
-
+      
       # 4.3 Run Kalman filter/smoother on new series with non-diffuse prior
       if (use.presample.info) {
         # Either estimate full model here or take results from previous model.
@@ -180,33 +181,32 @@ SSModelDynGompertzReinit <- setRefClass(
           model <- SSModelDynamicGompertz$new(Y = Y[idx.est], q = q)
           res.original <- model$estimate(sea.type = sea.type,
                                          sea.period = sea.period)
-          model_output <- res.original$output
+          model_output <- output(res.original)
         } else {
-          model_output <- original.results$output
-          model_seasonal <- attr(
-            model_output$model$terms, "specials")$SSMseasonal
+          model_output <- output(original.results)
+          model_seasonal <- seasonalComp(original.results)
           sea.type <- if (is.null(model_seasonal)) {'none'} else {
             'trigonometric'}
           sea.period <- if (!is.null(model_seasonal)) {
-            ncol(model_output$att) - 1}
+            ncol(att(model_output)) - 1}
         }
-
+        
         # 4.3 Reset slope to 0 and add constant to initial value for level.
         # where reinit.date is t=r
         idx <- which(reinit.date == index(y))
         stopifnot(length(idx) == 1)
-        att <- model_output$att[idx,]
-        Ptt <- model_output$Ptt[, , idx]
-        Tt <- drop(model_output$model$T)
-        Rt <- drop(model_output$model$R)
-        Qt <- drop(model_output$model$Q)
-        Ht <- drop(model_output$model$H)
-
+        att <- att(model_output)[idx,]
+        Ptt <- Ptt(model_output)[, , idx]
+        Tt <- drop(matrixKFS(model_output,"T"))
+        Rt <- drop(matrixKFS(model_output,"R"))
+        Qt <- drop(matrixKFS(model_output,"Q"))
+        Ht <- drop(matrixKFS(model_output,"H"))
+        
         # a. Take a_{r|r} and P_{r|r} through prediction step to get a_{r+1}
         # and P_{r+1}
         a1 <- Tt %*% att
         P1 <- Tt %*% Ptt %*% t(Tt) + Rt %*% Qt %*% t(Rt)
-
+        
         # b. Set slope to 0 and add correction (\ln(Y_r/y_r) to level.
         a1["slope",] <- 0
         a1["level",] <- a1["level",] + log(Y[idx] / (Y[idx] - Y.t.r_0))
@@ -226,7 +226,7 @@ SSModelDynGompertzReinit <- setRefClass(
       q<-.self$q
       dates<-index(.self$Y)
       if(is.null(q)){
-        qest <- out$output$model$H[, , 1]/out$output$model$Q[2, 2, 1]
+        qest <- matrixKFS(output(out),"Q")[2, 2, 1]/matrixKFS(output(out),"H")[, , 1]
       }
       cat("Summary of SSModelDynamicGompertzReinit Model\n")
       cat("--------------------------------------\n")
@@ -248,32 +248,21 @@ SSModelDynGompertzReinit <- setRefClass(
       cat("  - Use presample info:", .self$use.presample.info)
       cat("\n")
       cat("  - Model States and Standard Errors\n")
-      base::print(out$output)
+      base::print(output(out))
     },
     print=function(){
       out <- .self$estimate()#sea.type = sea.type, sea.period = sea.period)
       if(is.null(.self$q)){
-        qest <- out$output$model$Q[2, 2, 1]/out$output$model$H[, , 1]
+        qest <- matrixKFS(output(out),"Q")[2, 2, 1]/matrixKFS(output(out),"H")[, , 1]
       }
       cat("SSModelDynamicGompertzReinit Model\n")
-      cat("\n")
-      cat("Cumulated Variable:\n")
-      base::print(head(.self$Y))
-      cat("Number of total observations in dataset:", length(.self$Y))
-      cat("\n")
-      cat("Signal-to-Noise Ratio (q):", 
-          ifelse(is.null(.self$q), paste(round(qest,5), "(estimated)"), 
-                 paste(.self$q, ("(user specified)"))), "\n")
-      cat("Seasonal components?",
-          ifelse(is.null(attr(out$output$model$terms,"specials")$SSMseasonal),
-                 "No","Yes"),"\n")
+      cat("Subclass of ")
+      callSuper()
       cat("Reinit date:",format(as.Date(.self$reinit.date, origin = "1970-01-01")))
       cat("\n")
       cat("Use presample info:", .self$use.presample.info)
       cat("\n")
-    },
-    plot_diff=function(title=NULL, ylab=NULL){
-      plot(diff(.self$Y), main=title, ylab=ylab)
     }
   )
 )
+

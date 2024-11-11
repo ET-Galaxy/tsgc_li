@@ -15,6 +15,7 @@
 #  http://www.r-project.org/Licenses/
 
 setOldClass("KFS")
+
 #'
 #' @title  Class for dynamic Gompertz curve state space model object.
 #'
@@ -61,13 +62,13 @@ SSModelDynamicGompertz <- setRefClass(
   contains = "SSModelBase",
   methods = list(
     get_model = function(
-      y,
-      q = NULL,
-      sea.type = 'trigonometric',
-      sea.period = 7
+    y,
+    q = NULL,
+    sea.type = 'trigonometric',
+    sea.period = 7
     )
     {
-    "Retrieves the model object.
+      "Retrieves the model object.
        \\subsection{Parameters}{\\itemize{
         \\item{\\code{y} The cumulated variable.}
         \\item{\\code{q} The signal-to-noise ratio (ratio of slope to irregular
@@ -88,7 +89,7 @@ SSModelDynamicGompertz <- setRefClass(
       return(model)
     },
     summary = function() {
-      out <- .self$estimate(sea.type = sea.type, sea.period = sea.period)
+      out <- suppressWarnings(.self$estimate(sea.type = sea.type, sea.period = sea.period))
       q<-.self$q
       if(is.null(q)){
         qest <- out$output$model$H[, , 1]/out$output$model$Q[2, 2, 1]
