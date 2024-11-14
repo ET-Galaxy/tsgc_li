@@ -44,7 +44,7 @@ SSModelBase <- setRefClass(
     # https://stackoverflow.com/questions/24363069/multiple-acceptable-classes-
     # in-reference-class-field-list
     sea.type="ANY", 
-    sea.period="numeric"
+    sea.period="ANY"
   ),
   methods = list(
     initialize = function(Y, q = NULL, sea.type="trigonometric", sea.period=7)
@@ -263,7 +263,7 @@ SSModelBase <- setRefClass(
       }
       return(model)
     },
-    estimate = function(sea.type = 'trigonometric', sea.period = 7) {
+    estimate = function() {
       "Estimates the dynamic Gompertz curve model when applied to an object of
       class \\code{SSModelDynamicGompertz} or \\code{SSModelDynGompertzReinit}.
       \\subsection{Parameters}{\\itemize{
@@ -279,6 +279,9 @@ SSModelBase <- setRefClass(
       containing the result output for the estimated dynamic Gompertz curve
       model.}
       "
+      sea.type=.self$sea.type
+      sea.period=.self$sea.period
+      
       # 1. Get LDL of cumulative series Y.
       y <- tsgc::df2ldl(Y)
 
