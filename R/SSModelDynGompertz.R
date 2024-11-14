@@ -89,29 +89,29 @@ SSModelDynamicGompertz <- setRefClass(
       return(model)
     },
     summary = function() {
-      out <- suppressWarnings(.self$estimate(sea.type = sea.type, sea.period = sea.period))
+      out <- suppressWarnings(output(.self$estimate()))
       q<-.self$q
       if(is.null(q)){
-        qest <- out$output$model$H[, , 1]/out$output$model$Q[2, 2, 1]
+        qest <- matrixKFS(out,"Q")[2, 2, 1]/matrixKFS(out,"H")[, , 1]
       }
       cat("Summary of SSModelDynamicGompertz Model\n")
       cat("--------------------------------------\n")
       cat("Cumulated Variable:\n")
       base::print(head(.self$Y))
       cat("Signal-to-Noise Ratio (q):", 
-          ifelse(is.null(q), paste(qest, "(estimated)"), 
+          ifelse(is.null(q), paste(signif(qest,3), "(estimated)"), 
                  paste(q, ("(user specified)"))), "\n")
       cat("Model Details:\n")
       cat("  - Model Type: Dynamic Gompertz Curve\n")
       cat("  - Seasonal Component: ", ifelse(sea.type == 'none', "None", "Trigonometric"), "\n")
       cat("  - Period of Seasonality: ", ifelse(sea.type == 'none', "N/A", sea.period), "\n")
       cat("  - Model States and Standard Errors\n")
-      base::print(out$output)
+      base::print(out)
     },
     print = function() {
-      out <- .self$estimate()#sea.type = sea.type, sea.period = sea.period)
+      out <- output(.self$estimate()) #KFS object
       if(is.null(.self$q)){
-        qest <- out$output$model$Q[2, 2, 1]/out$output$model$H[, , 1]
+        qest <- matrixKFS(out,"Q")[2, 2, 1]/matrixKFS(out,"H")[, , 1]
       }
       cat("SSModelDynamicGompertz Model\n")
       cat("\n")
@@ -120,10 +120,10 @@ SSModelDynamicGompertz <- setRefClass(
       cat("Number of observations:", length(.self$Y))
       cat("\n")
       cat("Signal-to-Noise Ratio (q):", 
-          ifelse(is.null(.self$q), paste(round(qest,5), "(estimated)"), 
+          ifelse(is.null(.self$q), paste(signif(qest,5), "(estimated)"), 
                  paste(.self$q, ("(user specified)"))), "\n")
       cat("Seasonal components?",
-          ifelse(is.null(attr(out$output$model$terms,"specials")$SSMseasonal),
+          ifelse(is.null(seasonalComp(out)),
                  "No","Yes"),"\n")
     },
     plot_diff =function(title=NULL, ylab=NULL){

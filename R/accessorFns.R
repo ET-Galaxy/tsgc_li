@@ -35,8 +35,7 @@ output<-function(object){
 #'
 #' @export
 seasonalComp<-function(object){
-  attr(
-    object$model$terms, "specials")$SSMseasonal
+  attr(object$model$terms, "specials")$SSMseasonal
 }
 
 #' @title Extract filtered state estimates used in KFS
