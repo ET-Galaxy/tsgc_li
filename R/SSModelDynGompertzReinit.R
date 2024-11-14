@@ -179,8 +179,7 @@ SSModelDynGompertzReinit <- setRefClass(
           # NB. Restrict sample to t<=r - date of reinitialisation.
           idx.est <- zoo::index(Y) <= reinit.date
           model <- SSModelDynamicGompertz$new(Y = Y[idx.est], q = q)
-          res.original <- model$estimate(sea.type = sea.type,
-                                         sea.period = sea.period)
+          res.original <- model$estimate()
           model_output <- output(res.original)
         } else {
           model_output <- output(original.results)
