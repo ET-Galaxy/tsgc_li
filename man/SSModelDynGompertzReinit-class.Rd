@@ -82,6 +82,38 @@ effect with daily data, this would be 7. Not required if
   if \code{sea.type = 'none'}.}
 }}
 \subsection{Return Value}{\code{KFS} model object.}}
+
+\item{\code{initialize(
+  Y,
+  q = NULL,
+  sea.type = "trigonometric",
+  sea.period = 7,
+  reinit.date = NULL,
+  original.results = NULL,
+  use.presample.info = TRUE
+)}}{Create an instance of the \code{SSModelDynGompertzReinit} class.
+ \subsection{Parameters}{\itemize{
+  \item{\code{Y} The cumulated variable.}
+  \item{\code{q} The signal-to-noise ratio (ratio of slope to irregular
+   variance). Defaults to \code{'NULL'}, in which case no
+   signal-to-noise ratio will be imposed. Instead, it will be estimated.}
+  \item{\code{reinit.date} The reinitialisation date \eqn{r}. Should
+  be specified as an object of class \code{"Date"}. Must be specified
+  if \code{original.results = NULL} and
+  \code{use.pre.sample.info = TRUE}.}
+  \item{\code{original.results} In place of a reinitialisation date, a
+  \code{KFS} results object can be specified here and the parameters for
+   the reinitialisation will be taken from this object. Must be specified
+    if \code{reinit.date = NULL} and \code{use.pre.sample.info = TRUE}.}
+  \item{\code{use.presample.info}  Logical value denoting whether or not
+   to use information from before the reinitialisation date in the
+   reinitialisation procedure. Default is \code{TRUE}. If \code{FALSE},
+   the model is estimated from scratch from the reinitialisation date and
+   no attempt to use information from before the reinitialisation date is
+    made.}
+}}
+\subsection{Usage}{\code{SSModelDynGompertzReinit$new(y, q = 0.005,
+reinit.date = as.Date("2021-05-12",format = date.format))}}}
 }}
 
 \examples{

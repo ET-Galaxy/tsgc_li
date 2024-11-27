@@ -10,7 +10,7 @@ matrixKFS(object, matrix)
 \arguments{
 \item{object}{KFS object}
 
-\item{matrix}{Any matrix component of SSModel, e.g. H,T,R,Q}
+\item{matrix}{String, indicating a matrix component of SSModel, e.g. H,T,R,Q}
 }
 \description{
 Accessor method to access the matrices used in observation,

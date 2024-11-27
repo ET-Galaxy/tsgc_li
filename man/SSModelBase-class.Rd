@@ -15,7 +15,7 @@ to this base class.
 \section{Methods}{
 
 \describe{
-\item{\code{estimate(sea.type = "trigonometric", sea.period = 7)}}{Estimates the dynamic Gompertz curve model when applied to an object of
+\item{\code{estimate()}}{Estimates the dynamic Gompertz curve model when applied to an object of
 class \code{SSModelDynamicGompertz} or \code{SSModelDynGompertzReinit}.
 \subsection{Parameters}{\itemize{
   \item{\code{sea.type} Seasonal type. Options are
