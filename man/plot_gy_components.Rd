@@ -4,7 +4,7 @@
 \alias{plot_gy_components}
 \title{Plots the growth rates and slope of the log cumulative growth rate}
 \usage{
-plot_gy_components(res, plt.start.date = NULL, smoothed = FALSE, title = NULL)
+plot_gy_components(object, ...)
 }
 \arguments{
 \item{res}{Results object estimated using the \code{estimate()} method.}

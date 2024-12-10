@@ -328,9 +328,6 @@ SSModelDynamicGompertz <- setRefClass(
       containing the result output for the estimated dynamic Gompertz curve
       model.}
       "
-    sea.type=.self$sea.type
-    sea.period=.self$sea.period
-    
     # 1. Get LDL of cumulative series Y.
     y <- tsgc::df2ldl(Y)
     
@@ -351,6 +348,7 @@ SSModelDynamicGompertz <- setRefClass(
     date.index <- if (!is.null(model$index)) { model$index } else { index(y) }
     
     results <- FilterResults$new(
+      data_xts = Y,
       index = date.index,
       output = model_output
     )
@@ -513,8 +511,8 @@ SSModelDynamicGompertz <- setRefClass(
         cat("Use presample info:", .self$use.presample.info)
       }
     },
-    plot_diff =function(title=NULL, ylab=NULL){
-      plot(diff(.self$Y), main=title, ylab=ylab)
+    plot_diff =function(...){
+      plot(diff(.self$Y), ...)
     }
   )
 )

@@ -26,6 +26,18 @@ output<-function(object){
   return(object$output)
 }
 
+#' @title Extract SSModel of KFS
+#
+#' @description Accessor method to access the fitted SSModel
+#'
+#' @param object FilterResults object
+#'
+#'
+#' @export
+modelKFS<-function(object){
+  return(object$model)
+}
+
 #' @title Extract number of seasonal components used in KFS
 #
 #' @description Accessor method to access the number of seasonal component used in KFS object
@@ -35,7 +47,7 @@ output<-function(object){
 #'
 #' @export
 seasonalComp<-function(object){
-  attr(object$model$terms, "specials")$SSMseasonal
+  attr(modelKFS(object)$terms, "specials")$SSMseasonal
 }
 
 #' @title Extract filtered state estimates used in KFS
@@ -63,19 +75,6 @@ Ptt<-function(object){
   object$Ptt
 }
 
-#' @title Extract error covariance matrix used in KFS
-#
-#' @description Accessor method to access the non-diffuse part of the error 
-#' covariance matrix in KFS object
-#'
-#' @param object KFS object
-#'
-#'
-#' @export
-Ptt<-function(object){
-  object$Ptt
-}
-
 #' @title Extract matrices used in observation, state and disturbance equation 
 #' in KFS object
 #
@@ -85,7 +84,54 @@ Ptt<-function(object){
 #' @param object KFS object
 #' @param matrix String, indicating a matrix component of SSModel, e.g. H,T,R,Q
 #'
+#' @examples
+#' library(tsgc)
+#' data(gauteng,package="tsgc")
+#' idx.est <- zoo::index(gauteng) <= as.Date("2020-07-06")
+#'
+#' # Specify a model
+#' model <- SSModelDynamicGompertz$new(Y = gauteng[idx.est], q = 0.005)
+#' # Estimate a specified model
+#' res <- model$estimate()
+#' 
+#' # Extract Z matrix from output(res)
+#' matrixKFS(output(res),"Z")
+#' 
 #' @export
 matrixKFS<-function(object,matrix){
-  object$model[[matrix]]
+  modelKFS(object)[[matrix]]
+}
+
+#' @title Extract time series y in SSModel
+#
+#' @description Accessor method to access time series y in SSModel object
+#'
+#' @param object SSModel object
+#'
+#' @export
+gety<-function(object){
+  object$y
+}
+
+#' @title Extract prediction y.hat in SSModel
+#
+#' @description Accessor method to access time series y in SSModel object
+#'
+#' @param object SSModel object
+#'
+#' @export
+gety.hat<-function(object){
+  object$y.hat
+}
+
+
+#' @title Extract alphahat in SSModel
+#
+#' @description Accessor method to access alphahat in SSModel object
+#'
+#' @param object SSModel object
+#'
+#' @export
+alphahat<-function(object){
+  object$alphahat
 }

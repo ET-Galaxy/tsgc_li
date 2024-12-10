@@ -5,16 +5,11 @@
 \title{Extract error covariance matrix used in KFS}
 \usage{
 Ptt(object)
-
-Ptt(object)
 }
 \arguments{
 \item{object}{KFS object}
 }
 \description{
-Accessor method to access the non-diffuse part of the error
-covariance matrix in KFS object
-
 Accessor method to access the non-diffuse part of the error
 covariance matrix in KFS object
 }

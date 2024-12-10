@@ -5,15 +5,7 @@
 \title{Plots the forecast of new cases (the difference of the cumulated
 variable)}
 \usage{
-plot_new_cases(
-  res,
-  Y,
-  n.ahead,
-  confidence.level = 0.68,
-  date_format = "\%Y-\%m-\%d",
-  title = NULL,
-  plt.start.date = NULL
-)
+plot_new_cases(object, ...)
 }
 \arguments{
 \item{res}{Results object estimated using the \code{estimate()} method.}

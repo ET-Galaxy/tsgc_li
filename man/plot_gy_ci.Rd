@@ -4,14 +4,7 @@
 \alias{plot_gy_ci}
 \title{Plots the growth rates and slope of the log cumulative growth rate}
 \usage{
-plot_gy_ci(
-  res,
-  plt.start.date = NULL,
-  smoothed = FALSE,
-  title = NULL,
-  series.name = NULL,
-  pad.right = NULL
-)
+plot_gy_ci(object, ...)
 }
 \arguments{
 \item{res}{Results object estimated using the \code{estimate()} method.}

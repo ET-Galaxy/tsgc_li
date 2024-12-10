@@ -16,3 +16,17 @@ matrixKFS(object, matrix)
 Accessor method to access the matrices used in observation,
 state and disturbance equation in KFS object
 }
+\examples{
+library(tsgc)
+data(gauteng,package="tsgc")
+idx.est <- zoo::index(gauteng) <= as.Date("2020-07-06")
+
+# Specify a model
+model <- SSModelDynamicGompertz$new(Y = gauteng[idx.est], q = 0.005)
+# Estimate a specified model
+res <- model$estimate()
+
+# Extract Z matrix from output(res)
+matrixKFS(output(res),"Z")
+
+}

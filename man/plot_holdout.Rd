@@ -5,16 +5,7 @@
 \title{Plots the forecast of new cases (the difference of the cumulated
 variable) over a holdout sample.}
 \usage{
-plot_holdout(
-  res,
-  Y,
-  Y.eval,
-  confidence.level = 0.68,
-  date_format = "\%Y-\%m-\%d",
-  series.name = NULL,
-  title = NULL,
-  caption = NULL
-)
+plot_holdout(object, ...)
 }
 \arguments{
 \item{res}{Results object estimated using the \code{estimate()} method.}
@@ -29,12 +20,12 @@ sample (i.e. to which the forecasts should be compared to).}
 use in forecasts of \eqn{y_t = \Delta Y_t}. Default is 0.68, which is
 approximately one standard deviation for a Normal distribution.}
 
-\item{date_format}{Date format, e.g. \code{'\%Y-\%m-\%d'}, which is the
-default.}
-
 \item{series.name}{Name of the variable you are forecasting for the purposes
 of a $y$-axis label. E.g. if \code{series.name = "Cases"} the \eqn{y}-axis
 will show "New Cases".}
+
+\item{date_format}{Date format, e.g. \code{'\%Y-\%m-\%d'}, which is the
+default.}
 
 \item{title}{Title for forecast plot. Enter as text string. \code{NULL}
 (i.e. no title) by default.}
