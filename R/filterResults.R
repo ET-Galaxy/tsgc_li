@@ -689,6 +689,55 @@ FilterResults <- setRefClass(
       
       
       return(p1)
-    }
+    },
+    mapes=function(n.ahead,Y){
+      res<-.self
+        date_format="%Y-%m-%d"
+        
+        Date <- Actual <- Forecast <- ForecastTrend <- lower <- upper <- NULL
+        
+        model <- res$output$model
+        est.date.index <- res$index
+        
+        y.level.est <- Y[est.date.index]
+        
+        p <- attr(res$output$model, 'p')
+        if(p!=1) { stop('NotImplementedError') }
+        
+        Y.eval<-Y[(tail(res$index,1)+0:n.ahead)]
+        
+        y.eval.diff <- diff(Y.eval) %>% na.omit
+        
+        est.date.index <- res$index %>% as.Date()
+        estimation.date.end <- tail(est.date.index, 1)
+        
+        y.hat.diff.final.ci <- res$predict_level(
+          y.cum = y.level.est, n.ahead = n.ahead, confidence_level = 0.68,
+          return.diff = TRUE
+        )
+        y.hat.diff.final <- res$predict_level(
+          y.cum = y.level.est, n.ahead = n.ahead, confidence_level =0.68,
+          sea.on = TRUE,
+          return.diff = TRUE
+        )
+        
+        d <- cbind(
+          y.eval.diff[index(y.eval.diff)>estimation.date.end,],
+          y.hat.diff.final[, 1],
+          y.hat.diff.final.ci[, 1]
+        )
+        names(d) <- c('Actual', 'Forecast', 'ForecastTrend')
+        
+        df_plot <- as.data.frame(d)
+        df_plot$Date <- as.Date(rownames(df_plot), format = date_format)
+        
+        d.eval <- na.omit(d)
+        mape.trend <- 100*(abs(d.eval$Actual - d.eval$`ForecastTrend`)/
+                             d.eval$Actual) %>% mean
+        mape.sea <- 100*(abs(d.eval$Actual - d.eval$Forecast)/d.eval$Actual) %>%
+          mean
+        
+        return(list(trend=mape.trend, sea=mape.sea))
+      }
   )
 )

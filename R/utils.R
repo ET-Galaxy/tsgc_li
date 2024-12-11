@@ -321,73 +321,8 @@ forecast.peak <- function(delta, gamma) {
 #' the forecast that includes the seasonal component.
 #'
 #' @export
-mape<-function(res,n.ahead,Y){
-  if (class(res)=="FilterResults"){
-    date_format="%Y-%m-%d"
-    
-    Date <- Actual <- Forecast <- ForecastTrend <- lower <- upper <- NULL
-    
-    model <- res$output$model
-    est.date.index <- res$index
-    
-    y.level.est <- Y[est.date.index]
-    
-    p <- attr(res$output$model, 'p')
-    if(p!=1) { stop('NotImplementedError') }
-    
-    Y.eval<-Y[(tail(res$index,1)+0:n.ahead)]
-    
-    y.eval.diff <- diff(Y.eval) %>% na.omit
-    
-    est.date.index <- res$index %>% as.Date()
-    estimation.date.end <- tail(est.date.index, 1)
-    
-    y.hat.diff.final.ci <- res$predict_level(
-      y.cum = y.level.est, n.ahead = n.ahead, confidence_level = 0.68,
-      return.diff = TRUE
-    )
-    y.hat.diff.final <- res$predict_level(
-      y.cum = y.level.est, n.ahead = n.ahead, confidence_level =0.68,
-      sea.on = TRUE,
-      return.diff = TRUE
-    )
-    
-    d <- cbind(
-      y.eval.diff[index(y.eval.diff)>estimation.date.end,],
-      y.hat.diff.final[, 1],
-      y.hat.diff.final.ci[, 1]
-    )
-    names(d) <- c('Actual', 'Forecast', 'ForecastTrend')
-    
-    df_plot <- as.data.frame(d)
-    df_plot$Date <- as.Date(rownames(df_plot), format = date_format)
-    
-    d.eval <- na.omit(d)
-    mape.trend <- 100*(abs(d.eval$Actual - d.eval$`ForecastTrend`)/
-                         d.eval$Actual) %>% mean
-    mape.sea <- 100*(abs(d.eval$Actual - d.eval$Forecast)/d.eval$Actual) %>%
-      mean
-  }
-  else{
-    forecasts<-res$predict_level(n.forc=n.ahead)
-    fadmits<-forecasts$trend    #trend
-    sea<-forecasts$seasonal        #seasonal
-    
-    end.date<-tail(index(res$data_xts),1)
-    idx.dates <- (index(Y) >=end.date)
-    data_validation<-na.omit(add_daily_ldl(Y[idx.dates], LeadIndCol = res$LeadIndCol))[1:n.ahead]
-    
-    sea<-sea[,1] #get the forecast column
-    newAdmit_validation<-data_validation[,c("newAdmit")]
-    compare<-cbind(newAdmit_validation,fadmits[,1], sea)
-    names(compare)<-c("Actual", "ForecastTrend", "Forecast")
-    
-    mape.trend <- 100*(abs(compare$Actual - compare$ForecastTrend)/
-                         compare$Actual) %>% mean
-    mape.sea <- 100*(abs(compare$Actual - compare$Forecast)/compare$Actual) %>%
-      mean
-  }
-  return(list(trend=mape.trend, sea=mape.sea))
+mapes<-function(object,...){
+  object$mapes(...)
 }
 
 
@@ -443,12 +378,12 @@ cross_val<-function(y,est.end.date,n.ahead,lags,totaldays=1,freq=1, vanilla=TRUE
       Z = y[,-LeadIndCol]
       model_q <- SSModelDynamicGompertz$new(Y = Z[index(Z) <= est.end.date+(k-1)*freq])
       res <- model_q$estimate()
-      results[1,k+1]=round(mape(res,n.ahead,Z)$sea,2)
+      results[1,k+1]=round(mapes(res,n.ahead,Z)$sea,2)
     }
     for (i in lags){
       out<-SSModelLeadingIndicator(Y=y[index(y) <= est.end.date+(k-1)*freq],n.lag = i)
       res<-out$estimate()
-      results[vanilla+i,k+1]<-round(mape(res,n.ahead,y)$sea,2)
+      results[vanilla+i,k+1]<-round(mapes(res,n.ahead,y)$sea,2)
     }
     results[length(lags)+vanilla+1,k+1]=alllags[which.min(results[,k+1])]
   }

@@ -379,17 +379,15 @@ FilterResultsLI <- setRefClass(
           ggplot2::scale_size_manual(values = c(1, 1, 1,1))
         return(p2)
       },
-  plot_log_forecast = function(Y.eval, n.ahead = 14,
+  plot_log_forecast = function(Y, n.ahead = 14,
                                plt.start.date=NULL, title="", caption = ""){
     res<-.self
     out<-res$output
-    data_xts<-res$data_xts
-    n.lag<-res$n.lag
     
     old=res$data_xts[,"LDLhosp"]
     old=old[index(old)>head(index(old),1)+n.lag]
     
-    eng_full<-add_daily_ldl(Y.eval)
+    eng_full<-add_daily_ldl(Y)
     eng_full<-eng_full[index(eng_full)>tail(index(old),1),"LDLhosp"]
     actual=eng_full[1:n.lag]
     
@@ -462,7 +460,7 @@ FilterResultsLI <- setRefClass(
         plot.caption = element_text(size = rel(1)),
       )
   },
-  plot_holdout=function(Y.eval,n.ahead=14, confidence.level = 0.68,
+  plot_holdout=function(Y,n.ahead=14, confidence.level = 0.68,
                         date_format = "%Y-%m-%d", series.name = "target variable",
                         title= NULL, caption = NULL){
     res<-.self
@@ -473,7 +471,7 @@ FilterResultsLI <- setRefClass(
     end_date<-tail(index(data_xts),1)
     sea<-sea[,1] #get the forecast column
     
-    future_data<-add_daily_ldl(Y.eval,LeadIndCol = res$LeadIndCol) %>% subset(index(.) > end_date)
+    future_data<-add_daily_ldl(Y,LeadIndCol = res$LeadIndCol) %>% subset(index(.) > end_date)
     data_validation<-future_data[1:n.ahead, c("cAdmit", "newAdmit")]
     
     newAdmit_validation<-data_validation[,c("newAdmit")]
@@ -522,6 +520,27 @@ FilterResultsLI <- setRefClass(
       scale_size_manual(values = c(1, 1.5, 1))
     
     return(p1)
+  },
+  mapes=function(n.ahead,Y){
+    res<-.self
+      forecasts<-res$predict_level(n.forc=n.ahead)
+      fadmits<-forecasts$trend    #trend
+      sea<-forecasts$seasonal        #seasonal
+      
+      end.date<-tail(index(res$data_xts),1)
+      idx.dates <- (index(Y) >=end.date)
+      data_validation<-na.omit(add_daily_ldl(Y[idx.dates], LeadIndCol = LeadIndCol))[1:n.ahead]
+      
+      sea<-sea[,1] #get the forecast column
+      newAdmit_validation<-data_validation[,c("newAdmit")]
+      compare<-cbind(newAdmit_validation,fadmits[,1], sea)
+      names(compare)<-c("Actual", "ForecastTrend", "Forecast")
+      
+      mape.trend <- 100*(abs(compare$Actual - compare$ForecastTrend)/
+                           compare$Actual) %>% mean
+      mape.sea <- 100*(abs(compare$Actual - compare$Forecast)/compare$Actual) %>%
+        mean
+    return(list(trend=mape.trend, sea=mape.sea))
   }
 )
 )

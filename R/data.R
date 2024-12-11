@@ -57,3 +57,27 @@
 #' # plot daily cases
 #' plot(diff(england))
 "england"
+
+
+
+
+#' Cumulative cases of Covid-19 in Italy and England, before 14 Dec 2020.
+#'
+#' @docType data
+#'
+#' @usage data(covid)
+#'
+#' @format An object of class `"xts"`;
+#' \describe{
+#'   \item{Cases}{Cumulative cases of Covid-19}
+#' }
+#'
+#' @keywords datasets
+#'
+#' @references Downloaded from https://www.ecdc.europa.eu/en/publications-data/download-todays-data-geographic-distribution-covid-19-cases-worldwide
+#'
+#' @examples
+#' data(covid)
+#' # plot daily cases
+#' plot(diff(covid))
+"covid"
