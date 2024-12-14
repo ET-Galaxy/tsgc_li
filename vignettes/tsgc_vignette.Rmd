@@ -694,8 +694,8 @@ tsgc::df2ldl()
 `tsgc::plot_forecast` then creates and plots forecasts of $\ln(g_t)$.
 
 ```{r plot_forecast1, eval=F}
-tsgc::plot_forecast(
- res=res,
+tsgc::plot_log_forecast(
+ object=res,
  y.eval = y.eval, n.ahead = n.forecasts,
  plt.start.date =  tail(res$index, 1) - plt.length
 )
@@ -731,8 +731,8 @@ y.eval <- Y %>%
 # y.eval is LDL
 
 # Plot filtered, forecast and realised log growth rate
-p1 <- tsgc::plot_forecast(
-  res=res,
+p1 <- tsgc::plot_log_forecast(
+  object=res,
   y.eval = y.eval, n.ahead = n.forecasts,
   plt.start.date =  tail(res$index, 1) - plt.length
 )
@@ -744,8 +744,7 @@ April 2021, with their prediction intervals.
 
 ```{r fig-3, fig.cap = "Figure 3: Fourteen-day forecast of new cases from 20 April 2021 for Gauteng province in South Africa"}
 tsgc::plot_new_cases(
-  res, Y=y,
-  n.ahead=n.forecasts,
+  res,n.ahead=n.forecasts,
   confidence.level=confidence.level,
   date_format="%Y-%m-%d",
   plt.start.date = tail(res$index, 1) - plt.length
@@ -759,8 +758,7 @@ first differences of `Y.eval`, the cumulative series for the forecast
 window.
 
 ```{r fig-4, fig.cap = "Figure 4: Accuracy of the fourteen-day forecast of new cases from 20 April 2021 for Gauteng province in South Africa."}
-tsgc::plot_holdout(res, Y=y,
-                   Y.eval = Y[(tail(res$index,1)+0:n.forecasts)],
+tsgc::plot_holdout(res, Y.eval = Y[(tail(res$index,1)+0:n.forecasts)],
                    confidence.level = 0.68,
                    date_format = "%Y-%m-%d")
 ```
@@ -820,7 +818,6 @@ specified. The forecast options specified earlier are retained.
 tsgc::write_results(
  res=res,
  res.dir = res.dir,
- Y=Y,
  n.ahead = n.forecasts,
  confidence.level =  confidence.level
 )
@@ -973,7 +970,7 @@ reinit.dates = "2021-04-29"
 `SSModelDynGompertz`, with the addition of the `reinit.dates` argument.
 
 ```{r reinit_estim, eval=F}
-model <- SSModelDynGompertzReinit$new(
+model <- SSModelDynamicGompertz$new(
   Y = y, q = q,
   reinit.date = as.Date(reinit.dates,
   format = date.format)

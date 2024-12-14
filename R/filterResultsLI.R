@@ -23,20 +23,21 @@ setOldClass("KFS")
 #' res$print_estimation_results()
 #' # Forecast 7 days ahead from the end of the estimation window
 #' res$predict_level(y.cum = gauteng[idx.est], n.ahead = 7,
-#'   confidence_level = 0.68)
+#'   confidence.level = 0.68)
 #' # Forecast 7 days ahead from the model and return filtered states
 #' res$predict_all(n.ahead = 7, return.all = TRUE)
 #' # Return the filtered growth rate and its components
 #' res$get_growth_y(return.components = TRUE)
 #' # Return smoothed growth rate of incidence variable and its confidence
 #' # interval
-#' res$get_gy_ci(smoothed = TRUE, confidence_level = 0.68)
+#' res$get_gy_ci(smoothed = TRUE, confidence.level = 0.68)
 #'
 #' @export
 #'
 FilterResultsLI <- setRefClass(
   "FilterResultsLI",
   fields = list(
+    index="ANY",
     data_xts = "ANY",
     output = "KFS",
     n.lag="numeric",
@@ -44,15 +45,17 @@ FilterResultsLI <- setRefClass(
     LeadIndCol="numeric"
   ),
   methods = list(
-    initialize = function(data_xts, output,n.lag,sea.period,LeadIndCol)
+    initialize = function(index,data_xts, output,n.lag,sea.period,LeadIndCol)
     {
+      index <<-index
       data_xts <<- data_xts
       output <<- output
       n.lag <<- n.lag
       sea.period <<- sea.period
       LeadIndCol<<-LeadIndCol
     },
-    predict_level = function(n.forc=n.lag, confidence.level=0.68){
+    predict_level = function(n.forc=n.lag, 
+                             confidence.level=0.68){
       "Forecast the cumulated variable or the incidence of it. This function returns
       the forecast of the cumulated variable \\eqn{Y}, or the forecast of the incidence of the cumulated variable, \\eqn{y}. For
       example, in the case of an epidemic, \\eqn{y} might be daily new cases of
@@ -61,7 +64,7 @@ FilterResultsLI <- setRefClass(
        \\subsection{Parameters}{\\itemize{
         \\item{\\code{n.forc} The number of periods ahead you wish to forecast from
         the end of the estimation window.}
-        \\item{\\code{confidence_level} The confidence level for the log growth
+        \\item{\\code{confidence.level} The confidence level for the log growth
          rate that should be used to compute
         the forecast intervals of \\eqn{y}.}
         }
@@ -256,7 +259,7 @@ FilterResultsLI <- setRefClass(
         return(gy.t)
       }
     },
-    get_gy_ci = function(smoothed = FALSE, confidence_level = 0.68) {
+    get_gy_ci = function(smoothed = FALSE, confidence.level = 0.68) {
       "Returns the growth rate of the incidence (\\eqn{y}) of the cumulated
       variable (\\eqn{Y}). Computed as
       \\deqn{g_t = \\exp\\{\\delta_t\\}+\\gamma_t.}
@@ -265,7 +268,7 @@ FilterResultsLI <- setRefClass(
         smoothed estimates of \\eqn{\\delta} and \\eqn{\\gamma} to compute the
         growth rate (\\code{TRUE}), or the contemporaneous filtered estimates
         (\\code{FALSE}). Default is \\code{FALSE}.}
-        \\item{\\code{confidence_level} Confidence level for the confidence
+        \\item{\\code{confidence.level} Confidence level for the confidence
         interval.  Default is \\eqn{0.68}, which is one standard deviation for
         a normally distributed random variable.}
       }}
@@ -287,7 +290,7 @@ FilterResultsLI <- setRefClass(
       gy.t <- g.t + filtered_slope
       
       idx.slope <- grep("slope", colnames(att(kfs_out)))
-      ci <- qnorm((1 - confidence_level) / 2) *
+      ci <- qnorm((1 - confidence.level) / 2) *
         sqrt(kfs_out$Ptt[idx.slope, idx.slope,]) %o% c(1, -1)
       ci_bounds <- as.vector(gy.t) + ci
       
@@ -344,7 +347,7 @@ FilterResultsLI <- setRefClass(
         
         #Plot forecast graph
         df_plot<-rbind(data_xts$newAdmit,fadmits$zero)
-        df_plot$Smooth<-smAdmit
+        #df_plot$Smooth<-smAdmit
         df_plot$Forecast<-sea
         df_plot$ForecastTrend<-fadmits$forc
         df_plot<-df_plot%>% subset(index(.) > plt.start.date)
@@ -354,12 +357,12 @@ FilterResultsLI <- setRefClass(
         
         p2<-ggplot2::ggplot(data = df_plot, aes(x = Index)) +
           ggplot2::geom_line(aes(y = newAdmit, color = "Data"), lwd = 0.85) +
-          ggplot2::geom_line(aes(y = Smooth, color = "Smoothed\ndata"),lwd=0.85)+
+          #ggplot2::geom_line(aes(y = Smooth, color = "Smoothed\ndata"),lwd=0.85)+
           ggplot2::geom_line(aes(y = Forecast, color = "Forecast"), lwd = 0.85) +
           ggplot2::geom_line(
             aes(y = ForecastTrend, color = "Forecast\nTrend"), lwd = 0.85
           ) +
-          ggplot2::scale_color_manual(values = c("black", "grey", "#AA2045","red")) +
+          ggplot2::scale_color_manual(values = c("black", "grey", "#AA2045")) +
           ggplot2::geom_ribbon(data = ci, aes(x = Index, ymin = lwr, ymax = upr),
                                linetype = 0, linewidth = 0, fill = "#AA2045", alpha = 0.1) +
           labs(x = "Date", y = paste("New",series.name), title = title) +
@@ -374,9 +377,9 @@ FilterResultsLI <- setRefClass(
             plot.caption = element_text(size = rel(1))
           ) +
           ggplot2::scale_linetype_manual(
-            values = c("solid", "solid", "solid", "solid")) +
+            values = c("solid", "solid", "solid")) +
           ggplot2::scale_x_date(labels = scales::date_format("%d %b %y")) +
-          ggplot2::scale_size_manual(values = c(1, 1, 1,1))
+          ggplot2::scale_size_manual(values = c(1, 1, 1))
         return(p2)
       },
   plot_log_forecast = function(Y, n.ahead = 14,
@@ -389,7 +392,7 @@ FilterResultsLI <- setRefClass(
     
     eng_full<-add_daily_ldl(Y)
     eng_full<-eng_full[index(eng_full)>tail(index(old),1),"LDLhosp"]
-    actual=eng_full[1:n.lag]
+    actual=eng_full[1:n.ahead]
     
     lcadmit = lag(as.vector(data_xts$cAdmit)) %>% na.omit()
     smldlh = predict(out$model,states='trend')$LDLhosp
@@ -414,14 +417,18 @@ FilterResultsLI <- setRefClass(
     if (is.na(res$sea.period)) {
       forcmodel = SSModel(forcdata ~ SSMtrend(degree = 2, Q = matrix(c(0,0,0,Qf[2,2]),2,2),type = 'common')+SSMtrend(degree = 1, Q = matrix(Qf[3,3]),index=1),
                           H = out$model$H)
-    }
-    else{
+    } else {
       forcmodel = SSModel(forcdata ~ SSMtrend(degree = 2, Q = matrix(c(0,0,0,Qf[2,2]),2,2),type = 'common')+SSMseasonal(res$sea.period,Q = matrix(c(Qf[4,4],0,0,Qf[5,5]),2,2), sea.type='dummy', type='distinct')+SSMtrend(degree = 1, Q = matrix(Qf[3,3]),index=1),H = out$model$H)
     }
     forcout = predict(out$model,forcmodel,interval=c('prediction'),
                       level=0.68,states=c('trend'))
     
-    trend=xts(forcout$LDLhosp[,"fit"],tail(index(old),1)+(1:n.ahead))
+    if (n.lag>=n.ahead){
+      trend=xts(forcout$LDLhosp[,"fit"],tail(index(old),1)+(1:n.ahead))
+    } else {
+      trend=xts(forcout$LDLhosp[1:n.ahead,"fit"],tail(index(old),1)+(1:n.ahead))
+    }
+    
     
     d.plot<-cbind(old,filtered,trend,actual)
     colnames(d.plot)<-c('EstimationSample', 'FilteredLevel', 'Forecast', 'RealisedData')

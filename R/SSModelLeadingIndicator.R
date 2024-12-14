@@ -166,6 +166,7 @@ SSModelLeadingIndicator <- setRefClass(
       out = KFS(fit$model)
 
       results <- FilterResultsLI$new(
+        index= index(y),
         data_xts = y,
         output = out,
         n.lag=n.lag,

@@ -448,8 +448,8 @@ SSModelDynamicGompertz <- setRefClass(
       if(is.null(q)){
         qest <- matrixKFS(out,"Q")[2, 2, 1]/matrixKFS(out,"H")[, , 1]
       }
-      reinit<-!is.null(.self$reinit.date)
-      dates<-index(.self$Y)
+      reinit<-!is.null(reinit.date)
+      dates<-index(Y)
       
       cat("Summary of SSModelDynamicGompertz Model")
       if (reinit) {
@@ -475,18 +475,18 @@ SSModelDynamicGompertz <- setRefClass(
       cat("  - Dataset end date:", format(as.Date(tail(dates,1), origin = "1970-01-01")))
       cat("\n")
       if (reinit){
-        cat("  - Reinitialization date:",format(as.Date(.self$reinit.date, origin = "1970-01-01")))
+        cat("  - Reinitialization date:",format(as.Date(reinit.date, origin = "1970-01-01")))
         cat("\n")
-        cat("  - Use presample info:", .self$use.presample.info)
+        cat("  - Use presample info:", use.presample.info)
         cat("\n")
       }
       cat("  - Model States and Standard Errors\n")
       base::print(out)
     },
     print = function() {
-      reinit<-!is.null(.self$reinit.date)
+      reinit<-!is.null(reinit.date)
       out <- output(.self$estimate()) #KFS object
-      if(is.null(.self$q)){
+      if(is.null(q)){
         qest <- matrixKFS(out,"Q")[2, 2, 1]/matrixKFS(out,"H")[, , 1]
       }
       cat("SSModelDynamicGompertz Model")
@@ -496,23 +496,23 @@ SSModelDynamicGompertz <- setRefClass(
       cat("\n")
       cat("\n")
       cat("Cumulated Variable:\n")
-      base::print(head(.self$Y))
+      base::print(head(Y))
       cat("Number of observations:", length(.self$Y))
       cat("\n")
       cat("Signal-to-Noise Ratio (q):", 
-          ifelse(is.null(.self$q), paste(signif(qest,5), "(estimated)"), 
-                 paste(.self$q, ("(user specified)"))), "\n")
+          ifelse(is.null(q), paste(signif(qest,5), "(estimated)"), 
+                 paste(q, ("(user specified)"))), "\n")
       cat("Seasonal components?",
           ifelse(is.null(seasonalComp(out)),
                  "No","Yes"),"\n")
-      if (!is.null(.self$reinit.date)){
-        cat("Reinit date:",format(as.Date(.self$reinit.date, origin = "1970-01-01")))
+      if (!is.null(reinit.date)){
+        cat("Reinit date:",format(as.Date(reinit.date, origin = "1970-01-01")))
         cat("\n")
-        cat("Use presample info:", .self$use.presample.info)
+        cat("Use presample info:", use.presample.info)
       }
     },
     plot_diff =function(...){
-      plot(diff(.self$Y), ...)
+      plot(diff(Y), ...)
     }
   )
 )

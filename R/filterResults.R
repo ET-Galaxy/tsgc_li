@@ -26,14 +26,14 @@ setOldClass("KFS")
 #' res$print_estimation_results()
 #' # Forecast 7 days ahead from the end of the estimation window
 #' res$predict_level(y.cum = gauteng[idx.est], n.ahead = 7,
-#'   confidence_level = 0.68)
+#'   confidence.level = 0.68)
 #' # Forecast 7 days ahead from the model and return filtered states
 #' res$predict_all(n.ahead = 7, return.all = TRUE)
 #' # Return the filtered growth rate and its components
 #' res$get_growth_y(return.components = TRUE)
 #' # Return smoothed growth rate of incidence variable and its confidence
 #' # interval
-#' res$get_gy_ci(smoothed = TRUE, confidence_level = 0.68)
+#' res$get_gy_ci(smoothed = TRUE, confidence.level = 0.68)
 #'
 #' @export
 #'
@@ -54,7 +54,7 @@ FilterResults <- setRefClass(
     predict_level = function(
       y.cum,
       n.ahead,
-      confidence_level,
+      confidence.level,
       sea.on = FALSE,
       return.diff = FALSE)
     {
@@ -67,7 +67,7 @@ FilterResults <- setRefClass(
         \\item{\\code{y.cum} The cumulated variable.}
         \\item{\\code{n.ahead} The number of periods ahead you wish to forecast from
         the end of the estimation window.}
-        \\item{\\code{confidence_level} The confidence level for the log growth
+        \\item{\\code{confidence.level} The confidence level for the log growth
          rate that should be used to compute
         the forecast intervals of \\eqn{y}.}
         \\item{\\code{return.diff} Logical value indicating whether to return the cumulated variable,
@@ -101,7 +101,7 @@ FilterResults <- setRefClass(
       # Construct CI
       Ptt <- filtered.out$P.t.t
       i.level <- grep("level", colnames(model$T))
-      ci <- qnorm((1 - confidence_level) / 2) *
+      ci <- qnorm((1 - confidence.level) / 2) *
         sqrt(Ptt[i.level, i.level, timespan]) %o% c(1, -1)
       ci <- xts(exp(ci), order.by = v_dates_end)
 
@@ -283,7 +283,7 @@ FilterResults <- setRefClass(
         return(gy.t)
       }
     },
-    get_gy_ci = function(smoothed = FALSE, confidence_level = 0.68) {
+    get_gy_ci = function(smoothed = FALSE, confidence.level = 0.68) {
       "Returns the growth rate of the incidence (\\eqn{y}) of the cumulated
       variable (\\eqn{Y}). Computed as
       \\deqn{g_t = \\exp\\{\\delta_t\\}+\\gamma_t.}
@@ -292,7 +292,7 @@ FilterResults <- setRefClass(
         smoothed estimates of \\eqn{\\delta} and \\eqn{\\gamma} to compute the
         growth rate (\\code{TRUE}), or the contemporaneous filtered estimates
         (\\code{FALSE}). Default is \\code{FALSE}.}
-        \\item{\\code{confidence_level} Confidence level for the confidence
+        \\item{\\code{confidence.level} Confidence level for the confidence
         interval.  Default is \\eqn{0.68}, which is one standard deviation for
         a normally distributed random variable.}
       }}
@@ -314,7 +314,7 @@ FilterResults <- setRefClass(
       gy.t <- g.t + filtered_slope
 
       idx.slope <- grep("slope", colnames(att(kfs_out)))
-      ci <- qnorm((1 - confidence_level) / 2) *
+      ci <- qnorm((1 - confidence.level) / 2) *
         sqrt(kfs_out$Ptt[idx.slope, idx.slope,]) %o% c(1, -1)
       ci_bounds <- as.vector(gy.t) + ci
 
@@ -363,11 +363,11 @@ FilterResults <- setRefClass(
     if (is.null(plt.start.date)) {plt.start.date <- head(est.date.index, 1)}
     
     y.hat.diff.final.ci <- res$predict_level(
-      y.cum = y.level.est, n.ahead = n.ahead, confidence_level = confidence.level,
+      y.cum = y.level.est, n.ahead = n.ahead, confidence.level = confidence.level,
       return.diff = TRUE
     )
     y.hat.diff.final <- res$predict_level(
-      y.cum = y.level.est, n.ahead = n.ahead, confidence_level = confidence.level,
+      y.cum = y.level.est, n.ahead = n.ahead, confidence.level = confidence.level,
       sea.on = TRUE, return.diff = TRUE
     )
     
@@ -627,11 +627,11 @@ FilterResults <- setRefClass(
       estimation.date.end <- tail(est.date.index, 1)
       
       y.hat.diff.final.ci <- res$predict_level(
-        y.cum = y.level.est, n.ahead = n.ahead, confidence_level = confidence.level,
+        y.cum = y.level.est, n.ahead = n.ahead, confidence.level = confidence.level,
         return.diff = TRUE
       )
       y.hat.diff.final <- res$predict_level(
-        y.cum = y.level.est, n.ahead = n.ahead, confidence_level = confidence.level,
+        y.cum = y.level.est, n.ahead = n.ahead, confidence.level = confidence.level,
         sea.on = TRUE,
         return.diff = TRUE
       )
@@ -712,11 +712,11 @@ FilterResults <- setRefClass(
         estimation.date.end <- tail(est.date.index, 1)
         
         y.hat.diff.final.ci <- res$predict_level(
-          y.cum = y.level.est, n.ahead = n.ahead, confidence_level = 0.68,
+          y.cum = y.level.est, n.ahead = n.ahead, confidence.level = 0.68,
           return.diff = TRUE
         )
         y.hat.diff.final <- res$predict_level(
-          y.cum = y.level.est, n.ahead = n.ahead, confidence_level =0.68,
+          y.cum = y.level.est, n.ahead = n.ahead, confidence.level =0.68,
           sea.on = TRUE,
           return.diff = TRUE
         )

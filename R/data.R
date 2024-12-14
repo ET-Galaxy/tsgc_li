@@ -61,7 +61,7 @@
 
 
 
-#' Cumulative cases of Covid-19 in Italy and England, before 14 Dec 2020.
+#' Cumulative cases of Covid-19 in Italy and UK, before 14 Dec 2020.
 #'
 #' @docType data
 #'
