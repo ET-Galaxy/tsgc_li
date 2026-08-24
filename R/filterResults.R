@@ -41,6 +41,7 @@ setOldClass("idx_series")
 #' @importFrom magrittr %>%
 #' @importFrom methods new setRefClass setOldClass
 #' @importFrom abind abind
+#' @importFrom kableExtra kbl kable_classic footnote
 #' 
 #' @examples
 #' library(tsgc)

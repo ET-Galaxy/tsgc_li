@@ -42,6 +42,7 @@ setOldClass("idx_series")
 #' @importFrom magrittr %>%
 #' @importFrom methods new setRefClass setOldClass
 #' @importFrom stats predict qnorm
+#' @importFrom kableExtra kbl kable_classic footnote
 #' 
 #' @examples
 #' library(tsgc)
