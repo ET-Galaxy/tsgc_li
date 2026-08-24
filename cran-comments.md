@@ -4,10 +4,11 @@ This is a new release. It is a major version update (from 0.0 to 2.0.0) that
 includes breaking changes. This new release also includes a change of package
 maintainer, from Craig Thamotheram <craig_thamotheram@hotmail.com> to 
 Michael Ashby <mwa22@cam.ac.uk>. Craig Thamotheram has separately emailed
-<CRAN-submissions@R-project.org> to confirm this change. Please note that
-Craig Thamotheram's email address is no longer <cpt@tacindex.com>. This was a
-professional email address and he has since left the company. Craig emailed
-CRAN submissions from his personal email address 
+<CRAN-submissions@R-project.org> to confirm this change on 13 August 2026 and 
+24 August 2026 (due first email being during to the CRAN summer vacation). 
+Please note that Craig Thamotheram's email address is no longer 
+<cpt@tacindex.com>. This was a professional email address and he has since left 
+the company. Craig emailed CRAN submissions from his personal email address 
 <craig_thamotheram@hotmail.com>.
 
 In this version we have:
